@@ -490,40 +490,40 @@ https://oeis.org/A159257
 [9] OEIS，《n×n 点灯矩阵满秩 / 唯一解的尺寸》  
 https://oeis.org/A076436
 
-[10] Andries E. Brouwer，《Button Madness and Lights Out on Rectangles》  
+[10] Andries E. Brouwer，《矩形棋盘上的按钮疯狂与点灯游戏》  
 https://aeb.win.tue.nl/ca/madness/madrect.html
 
-[11] Klaus Sutner，《Linear Cellular Automata and the Garden-of-Eden》  
+[11] Klaus Sutner，《线性元胞自动机与伊甸园》  
 https://doi.org/10.1007/BF03023823
 
-[12] Klaus Sutner，《σ-Automata and Chebyshev-Polynomials》  
+[12] Klaus Sutner，《σ-自动机与切比雪夫多项式》  
 https://doi.org/10.1016/S0304-3975(97)00242-9
 
-[13] Henrik Eriksson、Kimmo Eriksson、Jonas Sjöstrand，《Note on the Lamp Lighting Problem》  
+[13] Henrik Eriksson、Kimmo Eriksson、Jonas Sjöstrand，《关于点灯问题的一点注记》  
 https://arxiv.org/abs/math/0411201
 
-[14] John Goldwasser、William Klostermeyer、Henry Ware，《Fibonacci Polynomials and Parity Domination in Grid Graphs》  
+[14] John Goldwasser、William Klostermeyer、Henry Ware，《网格图中的斐波那契多项式与奇偶支配》  
 https://doi.org/10.1007/s003730200020
 
-[15] John L. Goldwasser、William F. Klostermeyer，《Parity Dominating Sets in Grid Graphs》  
+[15] John L. Goldwasser、William F. Klostermeyer，《网格图中的奇偶支配集》  
 https://www.researchgate.net/publication/250342861_Parity_Dominating_Sets_in_Grid_Graphs
 
-[16] Rudolf Fleischer、Jiajin Yu，《A Survey of the Game “Lights Out!”》  
+[16] Rudolf Fleischer、Jiajin Yu，《点灯游戏综述》  
 https://doi.org/10.1007/978-3-642-40273-9_13
 
-[17] Martin Kreh，《“Lights Out” and Variants》  
+[17] Martin Kreh，《点灯游戏及其变体》  
 https://doi.org/10.4169/amer.math.monthly.124.10.937
 
-[18] Tamar Elise Wilson，《Lights Out: Determining Solvability on Rectangular Boards》  
+[18] Tamar Elise Wilson，《点灯游戏：矩形棋盘可解性的判定》  
 https://ida.mtholyoke.edu/bitstreams/269795c9-18b9-44b5-ba88-1d4a422008da/download
 
-[19] Anil Damle，《Krylov Methods》  
+[19] Anil Damle，《克雷洛夫方法》  
 https://www.cs.cornell.edu/courses/cs6220/2017fa/CS6220_Lecture8.pdf
 
-[20] Douglas H. Wiedemann，《Solving Sparse Linear Equations over Finite Fields》  
+[20] Douglas H. Wiedemann，《有限域上稀疏线性方程组的求解》  
 https://doi.org/10.1109/TIT.1986.1057137
 
-[21] Erich Kaltofen、B. David Saunders，《On Wiedemann's Method of Solving Sparse Linear Systems》  
+[21] Erich Kaltofen、B. David Saunders，《关于 Wiedemann 稀疏线性系统求解方法》  
 https://users.cs.duke.edu/~elk27/bibliography/91/KaSa91.pdf
 
 [22] 维基百科，《克雷洛夫子空间》  
