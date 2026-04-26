@@ -475,7 +475,7 @@ https://zhuanlan.zhihu.com/p/53646257
 [4] Chao Xu，《逼零集、点灯游戏与线性方程组》  
 https://zhuanlan.zhihu.com/p/553780037
 
-[5] GitHub — axpokl，《Pascal 实现的标准点灯问题 O(n³) 求解程序》  
+[5] GitHub — axpokl，《点灯问题 O(n²) Pascal 求解与代码实现》  
 https://github.com/axpokl/LightOut
 
 [6] GitHub — njpipeorgan，《大规模点灯问题求解器及解法说明》  
@@ -486,6 +486,54 @@ https://oeis.org/A075462
 
 [8] OEIS，《n×n 点灯问题的秩缺陷》  
 https://oeis.org/A159257
+
+[9] OEIS，《n×n 点灯矩阵满秩 / 唯一解的尺寸》  
+https://oeis.org/A076436
+
+[10] Andries E. Brouwer，《Button Madness and Lights Out on Rectangles》  
+https://aeb.win.tue.nl/ca/madness/madrect.html
+
+[11] Klaus Sutner，《Linear Cellular Automata and the Garden-of-Eden》  
+https://doi.org/10.1007/BF03023823
+
+[12] Klaus Sutner，《σ-Automata and Chebyshev-Polynomials》  
+https://doi.org/10.1016/S0304-3975(97)00242-9
+
+[13] Henrik Eriksson、Kimmo Eriksson、Jonas Sjöstrand，《Note on the Lamp Lighting Problem》  
+https://arxiv.org/abs/math/0411201
+
+[14] John Goldwasser、William Klostermeyer、Henry Ware，《Fibonacci Polynomials and Parity Domination in Grid Graphs》  
+https://doi.org/10.1007/s003730200020
+
+[15] John L. Goldwasser、William F. Klostermeyer，《Parity Dominating Sets in Grid Graphs》  
+https://www.researchgate.net/publication/250342861_Parity_Dominating_Sets_in_Grid_Graphs
+
+[16] Rudolf Fleischer、Jiajin Yu，《A Survey of the Game “Lights Out!”》  
+https://doi.org/10.1007/978-3-642-40273-9_13
+
+[17] Martin Kreh，《“Lights Out” and Variants》  
+https://doi.org/10.4169/amer.math.monthly.124.10.937
+
+[18] Tamar Elise Wilson，《Lights Out: Determining Solvability on Rectangular Boards》  
+https://ida.mtholyoke.edu/bitstreams/269795c9-18b9-44b5-ba88-1d4a422008da/download
+
+[19] Anil Damle，《Krylov Methods》  
+https://www.cs.cornell.edu/courses/cs6220/2017fa/CS6220_Lecture8.pdf
+
+[20] Douglas H. Wiedemann，《Solving Sparse Linear Equations over Finite Fields》  
+https://doi.org/10.1109/TIT.1986.1057137
+
+[21] Erich Kaltofen、B. David Saunders，《On Wiedemann's Method of Solving Sparse Linear Systems》  
+https://users.cs.duke.edu/~elk27/bibliography/91/KaSa91.pdf
+
+[22] 维基百科，《克雷洛夫子空间》  
+https://zh.wikipedia.org/wiki/克雷洛夫子空间
+
+[23] 维基百科，《邻接矩阵》  
+https://zh.wikipedia.org/wiki/邻接矩阵
+
+[24] 维基百科，《常对角矩阵》  
+https://zh.wikipedia.org/wiki/常对角矩阵
 
 
 ---
@@ -967,7 +1015,7 @@ https://zhuanlan.zhihu.com/p/53646257
 [4] Chao Xu, “Null Set, Lights Out, and Linear Equations”  
 https://zhuanlan.zhihu.com/p/553780037
 
-[5] GitHub — axpokl, “Pascal implementation of a standard Lights Out O(n³) solver”  
+[5] GitHub — axpokl, “Lights Out O(n²) Pascal solver and implementation”  
 https://github.com/axpokl/LightOut
 
 [6] GitHub — njpipeorgan, “Large-scale Lights Out solver and notes”  
@@ -978,4 +1026,52 @@ https://oeis.org/A075462
 
 [8] OEIS, “Rank deficiency of the n×n Lights Out matrix”  
 https://oeis.org/A159257
+
+[9] OEIS, “Full-rank / uniquely solvable sizes for the n×n Lights Out matrix”  
+https://oeis.org/A076436
+
+[10] Andries E. Brouwer, “Button Madness and Lights Out on Rectangles”  
+https://aeb.win.tue.nl/ca/madness/madrect.html
+
+[11] Klaus Sutner, “Linear Cellular Automata and the Garden-of-Eden”  
+https://doi.org/10.1007/BF03023823
+
+[12] Klaus Sutner, “σ-Automata and Chebyshev-Polynomials”  
+https://doi.org/10.1016/S0304-3975(97)00242-9
+
+[13] Henrik Eriksson, Kimmo Eriksson, Jonas Sjöstrand, “Note on the Lamp Lighting Problem”  
+https://arxiv.org/abs/math/0411201
+
+[14] John Goldwasser, William Klostermeyer, Henry Ware, “Fibonacci Polynomials and Parity Domination in Grid Graphs”  
+https://doi.org/10.1007/s003730200020
+
+[15] John L. Goldwasser, William F. Klostermeyer, “Parity Dominating Sets in Grid Graphs”  
+https://www.researchgate.net/publication/250342861_Parity_Dominating_Sets_in_Grid_Graphs
+
+[16] Rudolf Fleischer, Jiajin Yu, “A Survey of the Game ‘Lights Out!’”  
+https://doi.org/10.1007/978-3-642-40273-9_13
+
+[17] Martin Kreh, “‘Lights Out’ and Variants”  
+https://doi.org/10.4169/amer.math.monthly.124.10.937
+
+[18] Tamar Elise Wilson, “Lights Out: Determining Solvability on Rectangular Boards”  
+https://ida.mtholyoke.edu/bitstreams/269795c9-18b9-44b5-ba88-1d4a422008da/download
+
+[19] Anil Damle, “Krylov Methods”  
+https://www.cs.cornell.edu/courses/cs6220/2017fa/CS6220_Lecture8.pdf
+
+[20] Douglas H. Wiedemann, “Solving Sparse Linear Equations over Finite Fields”  
+https://doi.org/10.1109/TIT.1986.1057137
+
+[21] Erich Kaltofen, B. David Saunders, “On Wiedemann's Method of Solving Sparse Linear Systems”  
+https://users.cs.duke.edu/~elk27/bibliography/91/KaSa91.pdf
+
+[22] Wikipedia, “Krylov Subspace”  
+https://en.wikipedia.org/wiki/Krylov_subspace
+
+[23] Wikipedia, “Adjacency Matrix”  
+https://en.wikipedia.org/wiki/Adjacency_matrix
+
+[24] Wikipedia, “Toeplitz Matrix”  
+https://en.wikipedia.org/wiki/Toeplitz_matrix
 
