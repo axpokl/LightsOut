@@ -5,11 +5,9 @@ program diandeng;
 {$ifdef disp}
 uses Windows, display;
 const m=1000;
-const sosN=1024;
 {$else}
 uses Windows;
 const m=100000;
-const sosN=131072;
 {$endif}
 
 const wb=32;
@@ -17,11 +15,11 @@ const mw=(m+wb-1)div wb;
 
 type TVec=array[-2..mw]of LongWord;
      PVec=^TVec;
-     TSos=array[0..sosN-1]of byte;
+     TDynVec=array of boolean;
 
 var n:longword;
 var i,j:longint;
-var x,y,y1,y_,y_1,f,f1,c:TVec;
+var x,y,y1,y_,y_1,f,f1,c,c1:TVec;
 var k:longint;
 var o:boolean;
 var perfFreq,lastCounter:Int64;
@@ -170,14 +168,6 @@ begin
   write(ms:8:3,#9,ch);
 end;
 
-
-function VecIsZero(const a:TVec):boolean;
-var k2:longint;
-begin
-for k2:=0 to wn-1 do if a[k2]<>0 then begin VecIsZero:=false; exit; end;
-VecIsZero:=true;
-end;
-
 procedure VecXorRange(var a:TVec;const b:TVec;l,r:longint);
 var wl,wr,k2:longint;
 var ml,mr:LongWord;
@@ -198,31 +188,6 @@ else
   end;
 end;
 
-procedure BuildC(const vf:TVec; var vc:TVec);
-var tmp:TSos;
-var bit,base,t,len:longint;
-begin
-len:=1;
-while len<=longint(n) do len:=len shl 1;
-if len>sosN then len:=sosN;
-for base:=0 to len-1 do tmp[base]:=0;
-for base:=0 to n do if GetBit(vf,base)<>0 then tmp[base]:=1;
-bit:=1;
-while bit<len do
-  begin
-  base:=0;
-  while base<len do
-    begin
-    for t:=0 to bit-1 do tmp[base+t]:=tmp[base+t] xor tmp[base+t+bit];
-    inc(base,bit shl 1);
-    end;
-  bit:=bit shl 1;
-  end;
-VecZero(vc);
-for base:=0 to n do if tmp[base]<>0 then vc[base shr 5]:=vc[base shr 5] or (LongWord(1) shl (base and 31));
-VecNorm(vc);
-end;
-
 {$ifdef disp}
 procedure SaveMat(s:ansistring);
 begin
@@ -236,56 +201,75 @@ end;
 {$endif}
 
 procedure MakeMat();
-var y2,y_2,f2:TVec;
+var y2,y_2,f2,c2:TVec;
+var py,py1,py_,py_1,py2,py_2,pf,pf1,pf2,pc,pc1,pc2,pt:PVec;
+var hiu:longint;
 begin
 TimeMark('m');
 if (not o) or (longint(n)<k) then
   begin
   VecZero(y1); VecZero(y); VecZero(y_1); VecZero(y_);
   VecZero(f1); VecZero(f);
+  VecZero(c1); VecZero(c);
   SetBit(f,0,1);
   k:=0; o:=true;
   end;
+py1:=@y1; py:=@y; py_1:=@y_1; py_:=@y_; py2:=@y2; py_2:=@y_2;
+pf1:=@f1; pf:=@f; pf2:=@f2; pc1:=@c1; pc:=@c; pc2:=@c2;
 for j:=k+1 to n do
   begin
-  VecZero(y_2); VecZero(y2);
-  VecShiftL1(v1,y_);
-  VecShiftR1(v2,y_);
-  VecCopy(y_2,v1);
-  VecXorEq(y_2,y_);
-  VecXorEq(y_2,v2);
-  VecXorEq(y_2,y_1);
-  MaskDeg(y_2,j-1);
-  VecShiftL2(v1,y);
-  VecShiftL1(v2,y);
-  VecCopy(y2,v1);
-  VecXorEq(y2,v2);
-  VecXorEq(y2,y);
-  VecShiftL2(v1,y1);
-  VecXorEq(y2,v1);
-  VecShiftL1(v1,y_);
-  VecXorEq(y2,v1);
-  VecXorEq(y2,y_);
-  VecShiftR1(v1,y_);
-  VecXorEq(y2,v1);
-  VecShiftL1(v1,y_1);
-  VecXorEq(y2,v1);
-  VecXorEq(y2,y_1);
-  VecXorEq(y2,ones);
-  MaskDeg(y2,j-1);
-  SetBit(y_2,0,GetBit(y2,0));
-  y_2[-2]:=1;
-  VecCopy(y_1,y_); VecCopy(y_,y_2); VecCopy(y1,y); VecCopy(y,y2);
+  VecZero(py_2^); VecZero(py2^); VecZero(pf2^); VecZero(pc2^);
+  VecShiftL1(v1,py_^);
+  VecShiftR1(v2,py_^);
+  VecCopy(py_2^,v1);
+  VecXorEq(py_2^,py_^);
+  VecXorEq(py_2^,v2);
+  VecXorEq(py_2^,py_1^);
+  MaskDeg(py_2^,j-1);
+  VecShiftL2(v1,py^);
+  VecShiftL1(v2,py^);
+  VecCopy(py2^,v1);
+  VecXorEq(py2^,v2);
+  VecXorEq(py2^,py^);
+  VecShiftL2(v1,py1^);
+  VecXorEq(py2^,v1);
+  VecShiftL1(v1,py_^);
+  VecXorEq(py2^,v1);
+  VecXorEq(py2^,py_^);
+  VecShiftR1(v1,py_^);
+  VecXorEq(py2^,v1);
+  VecShiftL1(v1,py_1^);
+  VecXorEq(py2^,v1);
+  VecXorEq(py2^,py_1^);
+  VecXorEq(py2^,ones);
+  MaskDeg(py2^,j-1);
+  SetBit(py_2^,0,GetBit(py2^,0));
+  py_2^[-2]:=1;
+  if j=1 then
+    begin
+    SetBit(pc2^,0,1);
+    end
+  else
+    begin
+    hiu:=j div 2;
+    VecShiftL1(v1,pc^);
+    VecCopy(pf2^,v1);
+    VecXorEq(pf2^,pf1^);
+    MaskDeg(pf2^,hiu);
+    VecCopy(pc2^,pf^);
+    VecXorEq(pc2^,pc^);
+    VecXorEq(pc2^,pc1^);
+    MaskDeg(pc2^,hiu);
+    end;
+  pt:=py_1; py_1:=py_; py_:=py_2; py_2:=pt;
+  pt:=py1; py1:=py; py:=py2; py2:=pt;
+  pt:=pf1; pf1:=pf; pf:=pf2; pf2:=pt;
+  pt:=pc1; pc1:=pc; pc:=pc2; pc2:=pt;
   end;
-for j:=k+1 to n do
-  begin
-  VecZero(f2);
-  VecShiftL1(v1,f);
-  VecCopy(f2,v1);
-  VecXorEq(f2,f1);
-  MaskDeg(f2,j);
-  VecCopy(f1,f); VecCopy(f,f2);
-  end;
+VecCopy(v0,py1^); VecCopy(v1,py^); VecCopy(v2,py_1^); VecCopy(v3,py_^);
+VecCopy(y1,v0); VecCopy(y,v1); VecCopy(y_1,v2); VecCopy(y_,v3);
+VecCopy(v0,pf1^); VecCopy(v1,pf^); VecCopy(v2,pc1^); VecCopy(v3,pc^);
+VecCopy(f1,v0); VecCopy(f,v1); VecCopy(c1,v2); VecCopy(c,v3);
 k:=n;
 end;
 
@@ -537,11 +521,283 @@ while true do
   end;
 end;
 
+function GcdU(const va,vb:TVec; var vg,vu,vv:TVec; hi:longint):longint;
+var r0a,r1a,u0a,u1a,v0a,v1a:TVec;
+var r0,r1,u0,u1,v0,v1,tt:PVec;
+var kr0,kr1,ku0,ku1,kv0,kv1,shift,p,top,lim:longint;
+begin
+r0:=@r0a; r1:=@r1a; u0:=@u0a; u1:=@u1a; v0:=@v0a; v1:=@v1a;
+VecCopy(r0^,va); MaskDeg(r0^,hi);
+VecCopy(r1^,vb); MaskDeg(r1^,hi);
+VecZero(u0^); VecZero(u1^); VecZero(v0^); VecZero(v1^);
+SetBit(u0^,0,1);
+SetBit(v1^,0,1);
+kr0:=TopBitLE(r0^,hi);
+kr1:=TopBitLE(r1^,hi);
+ku0:=0; ku1:=-1;
+kv0:=-1; kv1:=0;
+while true do
+  begin
+  if kr0<kr1 then
+    begin
+    tt:=r0; r0:=r1; r1:=tt;
+    tt:=u0; u0:=u1; u1:=tt;
+    tt:=v0; v0:=v1; v1:=tt;
+    p:=kr0; kr0:=kr1; kr1:=p;
+    p:=ku0; ku0:=ku1; ku1:=p;
+    p:=kv0; kv0:=kv1; kv1:=p;
+    end;
+  if kr1<0 then
+    begin
+    VecCopy(vg,r0^); MaskDeg(vg,hi);
+    VecCopy(vu,u0^); MaskDeg(vu,hi);
+    VecCopy(vv,v0^); MaskDeg(vv,hi);
+    GcdU:=kr0;
+    exit;
+    end;
+  while kr0>=kr1 do
+    begin
+    shift:=kr0-kr1;
+    VecXorShiftRange(r0^,r1^,shift,kr1);
+    kr0:=TopBitLE(r0^,kr0-1);
+    if ku1>=0 then
+      begin
+      top:=ku0;
+      if ku1+shift>top then top:=ku1+shift;
+      if top>hi then top:=hi;
+      lim:=ku1;
+      if lim>hi-shift then lim:=hi-shift;
+      VecXorShiftRange(u0^,u1^,shift,lim);
+      ku0:=TopBitLE(u0^,top);
+      end;
+    if kv1>=0 then
+      begin
+      top:=kv0;
+      if kv1+shift>top then top:=kv1+shift;
+      if top>hi then top:=hi;
+      lim:=kv1;
+      if lim>hi-shift then lim:=hi-shift;
+      VecXorShiftRange(v0^,v1^,shift,lim);
+      kv0:=TopBitLE(v0^,top);
+      end;
+    end;
+  end;
+end;
+
+procedure VecStepJ(var dst:TVec; const src:TVec; hi:longint);
+var k2:longint;
+begin
+if hi<=0 then begin VecZero(dst); exit; end;
+dst[-2]:=0; dst[-1]:=0;
+for k2:=0 to wn-1 do
+  dst[k2]:=((src[k2] shl 2) or (src[k2-1] shr 30)) xor
+           ((src[k2] shr 2) or (src[k2+1] shl 30)) xor
+           ((src[k2] shl 1) or (src[k2-1] shr 31)) xor
+           ((src[k2] shr 1) or (src[k2+1] shl 31));
+if GetBit(src,0)<>0 then dst[0]:=dst[0] xor 1;
+if (hi>0) and (GetBit(src,hi)<>0) then
+  dst[hi shr 5]:=dst[hi shr 5] xor (LongWord(1) shl (hi and 31));
+if wn<=mw then dst[wn]:=0;
+if wn+1<=mw then dst[wn+1]:=0;
+MaskDeg(dst,hi);
+end;
+
+procedure VecH(var dst:TVec; const src:TVec; hi:longint);
+var k2:longint;
+begin
+dst[-2]:=0; dst[-1]:=0;
+for k2:=0 to wn-1 do
+  dst[k2]:=((src[k2] shl 1) or (src[k2-1] shr 31)) xor
+           ((src[k2] shr 1) or (src[k2+1] shl 31));
+if wn<=mw then dst[wn]:=0;
+if wn+1<=mw then dst[wn+1]:=0;
+MaskDeg(dst,hi);
+end;
+
+procedure ApplyPolyU(const va,vsrc:TVec; var vdst:TVec; hi,degmax:longint);
+var cur0,cur1:TVec;
+var pcur,pnxt,pt:PVec;
+var d,j2:longint;
+begin
+VecZero(cur0); VecZero(cur1); VecZero(vdst);
+VecCopy(cur0,vsrc);
+MaskDeg(cur0,hi);
+d:=TopBitLE(va,degmax);
+if d<0 then exit;
+pcur:=@cur0;
+pnxt:=@cur1;
+for j2:=0 to d do
+  begin
+  if GetBit(va,j2)<>0 then VecXorEq(vdst,pcur^);
+  if j2>=d then break;
+  VecStepJ(pnxt^,pcur^,hi);
+  pt:=pcur; pcur:=pnxt; pnxt:=pt;
+  end;
+MaskDeg(vdst,hi);
+end;
+
+procedure ApplyBezoutU(const vu,vv,vsrc:TVec; var vdst:TVec; hi,degmax:longint);
+var cur0,cur1,hcur:TVec;
+var pcur,pnxt,pt:PVec;
+var d,du,dv,j2:longint;
+begin
+VecZero(cur0); VecZero(cur1); VecZero(hcur); VecZero(vdst);
+VecCopy(cur0,vsrc);
+MaskDeg(cur0,hi);
+du:=TopBitLE(vu,degmax);
+dv:=TopBitLE(vv,degmax);
+if du>dv then d:=du else d:=dv;
+if d<0 then exit;
+pcur:=@cur0;
+pnxt:=@cur1;
+for j2:=0 to d do
+  begin
+  if GetBit(vv,j2)<>0 then VecXorEq(vdst,pcur^);
+  if GetBit(vu,j2)<>0 then
+    begin
+    VecH(hcur,pcur^,hi);
+    VecXorEq(vdst,hcur);
+    end;
+  if j2>=d then break;
+  VecStepJ(pnxt^,pcur^,hi);
+  pt:=pcur; pcur:=pnxt; pnxt:=pt;
+  end;
+MaskDeg(vdst,hi);
+end;
+
+
+procedure ComposeURec(const src:TDynVec; len:longint; var dst:TDynVec);
+var even,odd,ev,od:TDynVec;
+var le,lo,i,outlen:longint;
+begin
+while (len>0) and not(src[len-1]) do dec(len);
+if len<=0 then
+  begin
+  SetLength(dst,0);
+  exit;
+  end;
+if len=1 then
+  begin
+  SetLength(dst,1);
+  dst[0]:=src[0];
+  exit;
+  end;
+le:=(len+1) div 2;
+lo:=len div 2;
+SetLength(even,le);
+SetLength(odd,lo);
+for i:=0 to le-1 do even[i]:=src[i*2];
+for i:=0 to lo-1 do odd[i]:=src[i*2+1];
+ComposeURec(even,le,ev);
+ComposeURec(odd,lo,od);
+outlen:=2*len-1;
+SetLength(dst,outlen);
+for i:=0 to outlen-1 do dst[i]:=false;
+if Length(ev)>0 then
+  for i:=0 to Length(ev)-1 do
+    if ev[i] then dst[i*2]:=not dst[i*2];
+if Length(od)>0 then
+  for i:=0 to Length(od)-1 do
+    if od[i] then
+      begin
+      dst[i*2+1]:=not dst[i*2+1];
+      dst[i*2+2]:=not dst[i*2+2];
+      end;
+while (outlen>0) and not(dst[outlen-1]) do dec(outlen);
+SetLength(dst,outlen);
+end;
+
+procedure BuildQFromUV(const vu,vv:TVec; var vq:TVec; hi,degmax:longint; var degq:longint);
+var su,sv,cu,cv:TDynVec;
+var du,dv,k2:longint;
+begin
+VecZero(vq);
+du:=TopBitLE(vu,degmax);
+dv:=TopBitLE(vv,degmax);
+if dv>=0 then
+  begin
+  SetLength(sv,dv+1);
+  for k2:=0 to dv do sv[k2]:=GetBit(vv,k2)<>0;
+  ComposeURec(sv,dv+1,cv);
+  if Length(cv)>0 then
+    for k2:=0 to Length(cv)-1 do
+      if (k2<=hi) and cv[k2] then vq[k2 shr 5]:=vq[k2 shr 5] xor (LongWord(1) shl (k2 and 31));
+  end;
+if du>=0 then
+  begin
+  SetLength(su,du+1);
+  for k2:=0 to du do su[k2]:=GetBit(vu,k2)<>0;
+  ComposeURec(su,du+1,cu);
+  if Length(cu)>0 then
+    for k2:=0 to Length(cu)-1 do
+      if (k2+1<=hi) and cu[k2] then vq[(k2+1) shr 5]:=vq[(k2+1) shr 5] xor (LongWord(1) shl ((k2+1) and 31));
+  end;
+MaskDeg(vq,hi);
+degq:=TopBitLE(vq,hi);
+end;
+
+procedure ApplyBezoutHybrid(const vu,vv,vsrc:TVec; var vdst:TVec; hi,degmax:longint);
+var qx:TVec;
+var du,dv,d,est,degq:longint;
+begin
+du:=TopBitLE(vu,degmax);
+dv:=TopBitLE(vv,degmax);
+if du>dv then d:=du else d:=dv;
+if d<0 then
+  begin
+  VecZero(vdst);
+  exit;
+  end;
+est:=-1;
+if dv>=0 then est:=dv shl 1;
+if (du>=0) and (((du shl 1)+1)>est) then est:=(du shl 1)+1;
+if (est>=0) and (est<=hi) and (est*3<=d*5+16) then
+  begin
+  BuildQFromUV(vu,vv,qx,hi,degmax,degq);
+  if (degq>=0) and (degq*3<=d*5+16) then
+    begin
+    ApplyPoly(qx,vsrc,vdst,hi,degq);
+    exit;
+    end;
+  end;
+ApplyBezoutU(vu,vv,vsrc,vdst,hi,degmax);
+end;
+
+procedure ApplyCU(const va,vb,vsrc:TVec; var vdst:TVec; hi,degmax:longint);
+var cur0,cur1,hcur:TVec;
+var pcur,pnxt,pt:PVec;
+var d,da,db,j2:longint;
+begin
+VecZero(cur0); VecZero(cur1); VecZero(hcur); VecZero(vdst);
+VecCopy(cur0,vsrc);
+MaskDeg(cur0,hi);
+da:=TopBitLE(va,degmax);
+db:=TopBitLE(vb,degmax);
+if da>db then d:=da else d:=db;
+if d<0 then exit;
+pcur:=@cur0;
+pnxt:=@cur1;
+for j2:=0 to d do
+  begin
+  if GetBit(va,j2)<>0 then VecXorEq(vdst,pcur^);
+  if GetBit(vb,j2)<>0 then
+    begin
+    VecXorEq(vdst,pcur^);
+    VecH(hcur,pcur^,hi);
+    VecXorEq(vdst,hcur);
+    end;
+  if j2>=d then break;
+  VecStepJ(pnxt^,pcur^,hi);
+  pt:=pcur; pcur:=pnxt; pnxt:=pt;
+  end;
+MaskDeg(vdst,hi);
+end;
+
 procedure CalcMat2;
-var q,g:TVec;
+var gu,qu,qv:TVec;
 var v,z:TVec;
 var g0,g1,g2:TVec;
-var i0,r0,jmax,row1,row2,row3,l0,l1,l2,r1,r2,w,wl,wr:longint;
+var i0,r0,rU,jmax,row1,row2,row3,l0,l1,l2,r1,r2,w,wl,wr:longint;
 var tm,val:LongWord;
 var pg0,pg1,pg2,pt:PVec;
 
@@ -598,11 +854,11 @@ end;
 
 begin
 TimeMark('c');
-BuildC(f,c);
 TimeMark('q');
-r0:=gcd(f,c,g,q);
+rU:=GcdU(f,c,gu,qu,qv,longint(n div 2));
+r0:=rU*2;
 TimeMark('z');
-ApplyPoly(q,y,z,n-1,n-1);
+ApplyBezoutHybrid(qu,qv,y,z,n-1,longint(n div 2));
 TimeMark('d');
 if r0=0 then
   begin
@@ -612,7 +868,7 @@ else
 begin
 VecZero(g0); VecZero(g1); VecZero(g2);
 VecZero(v); v[0]:=1; VecNorm(v);
-ApplyPoly(g,v,g0,n-1,r0);
+ApplyPolyU(gu,v,g0,n-1,rU);
 TimeMark('x');
 MaskDeg(g0,n-1);
 pg0:=@g0; pg1:=@g1; pg2:=@g2;
@@ -703,7 +959,7 @@ var mask0:LongWord;
 var k2:longint;
 begin
 TimeMark('g');
-ApplyPoly(c,x,t,n-1,n);
+ApplyCU(f,c,x,t,n-1,longint(n div 2));
 wn0:=(longint(n)+31) shr 5;
 if (longint(n) and 31)=0 then mask0:=$FFFFFFFF else mask0:=(LongWord(1) shl (longint(n) and 31))-1;
 GeneMat:=true;

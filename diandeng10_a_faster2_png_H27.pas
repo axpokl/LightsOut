@@ -336,7 +336,7 @@ hasLastCounter:=false;
 {$ifdef disp}
 for n:=1 to m do
 {$else}
-for n:=9900 to m do
+for n:=9900 to 10000 do
 {$endif}
   begin
   write(n,#9);
