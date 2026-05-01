@@ -4,16 +4,13 @@ program diandeng;
 {$ifdef disp}
 uses Windows, display;
 const m=1000;
-const sosN=1024;
 {$else}
 uses Windows;
 const m=100000;
-const sosN=131072;
 {$endif}
 
 type TVec=array[-2..m]of boolean;
      PVec=^TVec;
-     TSos=array[0..sosN-1]of byte;
 
 var n:longword;
 var i,j:longint;
@@ -57,13 +54,6 @@ ReleaseBMP(bp);
 end;
 {$endif}
 
-function VecIsZero(const a:TVec;hi:longint):boolean;
-var k2:longint;
-begin
-for k2:=0 to hi do if a[k2] then begin VecIsZero:=false; exit; end;
-VecIsZero:=true;
-end;
-
 procedure VecZeroHi(var a:TVec;hi:longint);
 var k2:longint;
 begin
@@ -106,17 +96,17 @@ for j2:=0 to d do
   if j2>=d then break;
   l2:=l-1; if l2<0 then l2:=0;
   r2:=r+1; if r2>hi then r2:=hi;
-  if l-2>=-2 then pcur^[l-2]:=false;
-  if l-1>=-2 then pcur^[l-1]:=false;
-  if r+1<=hi+1 then pcur^[r+1]:=false;
+  pcur^[l-2]:=false;
+  pcur^[l-1]:=false;
+  pcur^[r+1]:=false;
   if r+2<=hi+1 then pcur^[r+2]:=false;
   for k2:=l2 to r2 do pnxt^[k2]:=pcur^[k2-1] xor pcur^[k2+1];
   while (l2<=r2) and not(pnxt^[l2]) do inc(l2);
   if l2>r2 then break;
   while not(pnxt^[r2]) do dec(r2);
-  if l2-2>=-2 then pnxt^[l2-2]:=false;
-  if l2-1>=-2 then pnxt^[l2-1]:=false;
-  if r2+1<=hi+1 then pnxt^[r2+1]:=false;
+  pnxt^[l2-2]:=false;
+  pnxt^[l2-1]:=false;
+  pnxt^[r2+1]:=false;
   if r2+2<=hi+1 then pnxt^[r2+2]:=false;
   pt:=pcur;
   pcur:=pnxt;
@@ -214,7 +204,7 @@ end;
 
 procedure CalcMat2;
 var q,g:TVec;
-var v,v0,z:TVec;
+var v,z:TVec;
 var g0,g1,g2:TVec;
 var pg0,pg1,pg2,pt:PVec;
 var i0,r0,jmax,row1,row2,row3,l0,l1,l2,r1,r2:longint;
@@ -231,7 +221,7 @@ if r0=0 then
   end
 else
 begin
-for i:=-2 to n do begin g0[i]:=false; g1[i]:=false; g2[i]:=false; v[i]:=false; v0[i]:=false; end;
+for i:=-2 to n do begin g0[i]:=false; g1[i]:=false; g2[i]:=false; v[i]:=false; end;
 v[0]:=true;
 ApplyPoly(g,v,g0,n-1,r0);
 TimeMark('x');

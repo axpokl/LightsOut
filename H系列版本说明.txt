@@ -27,3 +27,4 @@ H25	使用统一的ApplyPoly，优化z和d，仅扩散扫描
 H26	优化g，利用ApplyPoly，使其验证更快
 H27	优化TVec，使其不受m和sosN的影响
 H28	删除BuildC，还是递推c
+H29	删除冗余变量和代码

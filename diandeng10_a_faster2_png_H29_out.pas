@@ -1,49 +1,25 @@
-//{$define disp}
+{$define disp}
 program diandeng;
 
 {$ifdef disp}
-uses Windows, display;
-const m=1000;
-const sosN=1024;
-{$else}
-uses Windows;
-const m=100000;
-const sosN=131072;
+uses display;
 {$endif}
+
+const m=2000;
 
 type TVec=array[-2..m]of boolean;
      PVec=^TVec;
-     TSos=array[0..sosN-1]of byte;
 
 var n:longword;
 var i,j:longint;
 var x,y,y1,y_,y_1,f,f1,c,c1:TVec;
 var k:longint;
 var o:boolean;
-var perfFreq,lastCounter:Int64;
-var hasLastCounter:boolean;
 
 {$ifdef disp}
 var bb:pbitbuf;
 var bp:pbitmap;
 {$endif}
-
-function TimeMark(ch:char):Double;
-var c:Int64;
-var ms:Double;
-begin
-  QueryPerformanceCounter(c);
-  if not hasLastCounter then
-  begin
-    ms:=0;
-    hasLastCounter:=true;
-  end
-  else
-    ms:=(c-lastCounter)*1000.0/perfFreq;
-  lastCounter:=c;
-  TimeMark:=ms;
-  write(ms:8:3,#9,ch);
-end;
 
 {$ifdef disp}
 procedure SaveMat(s:ansistring);
@@ -57,12 +33,6 @@ ReleaseBMP(bp);
 end;
 {$endif}
 
-function VecIsZero(const a:TVec;hi:longint):boolean;
-var k2:longint;
-begin
-for k2:=0 to hi do if a[k2] then begin VecIsZero:=false; exit; end;
-VecIsZero:=true;
-end;
 
 procedure VecZeroHi(var a:TVec;hi:longint);
 var k2:longint;
@@ -126,10 +96,10 @@ for j2:=0 to d do
   end;
 end;
 
+
 procedure MakeMat();
 var y2,y_2,f2,c2:TVec;
 begin
-TimeMark('m');
 if (not o) or (longint(n)<k) then
   begin
   VecZeroHi(y1,longint(n)); VecZeroHi(y,longint(n)); VecZeroHi(y_1,longint(n)); VecZeroHi(y_,longint(n));
@@ -156,6 +126,7 @@ for j:=k+1 to n do
   VecCopyHi(c1,c,j); VecCopyHi(c,c2,j);
   end;
 k:=n;
+write('f ');for i:=0 to n do if f[i] then write(1) else write(0);writeln;
 end;
 
 function gcd(const vf,vg:TVec; var vd,vr:TVec):longint;
@@ -217,26 +188,30 @@ var q,g:TVec;
 var v,v0,z:TVec;
 var g0,g1,g2:TVec;
 var pg0,pg1,pg2,pt:PVec;
-var i0,r0,jmax,row1,row2,row3,l0,l1,l2,r1,r2:longint;
+var i0,r0,kk,jmax,row1,row2,row3,l0,l1,l2,r1,r2:longint;
 begin
-TimeMark('c');
-TimeMark('q');
+write('c ');for i:=0 to n-1 do if c[i] then write(1) else write(0);writeln;
+
 r0:=gcd(f,c,g,q);
-TimeMark('z');
+writeln('gcd',#9,r0,#9);
+write('q ');for i:=0 to n-1 do if q[i] then write(1) else write(0);writeln;
+write('g ');for i:=0 to n do if g[i] then write(1) else write(0);writeln;
+for i:=-1 to n do v[i]:=y[i];
+write('y ');for i:=0 to n-1 do if v[i] then write(1) else write(0);writeln;
 ApplyPoly(q,y,z,n-1,n-1);
-TimeMark('d');
 if r0=0 then
-  begin
-  for i:=0 to n-1 do x[i]:=z[i];
-  end
+  for i:=0 to n-1 do x[i]:=z[i]
 else
 begin
+write('z ');for i:=0 to n-1 do if z[i] then write(1) else write(0);writeln;
 for i:=-2 to n do begin g0[i]:=false; g1[i]:=false; g2[i]:=false; v[i]:=false; v0[i]:=false; end;
 v[0]:=true;
 ApplyPoly(g,v,g0,n-1,r0);
-TimeMark('x');
-pg0:=@g0; pg1:=@g1; pg2:=@g2;
 if n-r0-1<0 then jmax:=0 else jmax:=n-r0-1;
+for i:=-2 to n do v[i]:=g0[i];
+writeln('d');
+write(0,#9);for i:=0 to n-1 do if g0[i] then write(1) else write(0);writeln;
+pg0:=@g0; pg1:=@g1; pg2:=@g2;
 if jmax=0 then VecCopyHi(pg1^,pg0^,longint(n))
 else if r0<jmax then
   begin
@@ -258,8 +233,10 @@ else
     begin
     for i:=-2 to n do pg0^[i]:=false;
     for i:=0 to n-1 do pg0^[i]:=pg1^[i-1] xor pg1^[i+1] xor pg2^[i];
+    write(j,#9);for i:=0 to n-1 do if pg0^[i] then write(1) else write(0);writeln;
     pt:=pg0; pg0:=pg2; pg2:=pg1; pg1:=pt;
     end;
+  for j:=jmax+1 to n-1 do begin write(j,#9);for i:=0 to n-1 do write(0);writeln; end;
   end;
 for i:=0 to n-1 do x[i]:=false;
 row1:=n-1;
@@ -269,11 +246,17 @@ for i:=n-1 downto r0 do
   begin
   l1:=row1-(r0 shl 1); if l1<0 then l1:=0; r1:=row1; if r1>longint(n)-1 then r1:=longint(n)-1;
   if z[i] then
-    begin
+  begin
     i0:=i-r0;
+write(i,#9,i0,#9);
+for kk:=0 to n-1 do if z[kk] then write(1) else write(0);write(#9);
     for j:=l1 to r1 do z[j]:=z[j] xor pg1^[j];
     x[i0]:=true;
-    end;
+for kk:=0 to n-1 do if pg1^[kk] then write(1) else write(0);write(#9);
+for kk:=0 to n-1 do if z[kk] then write(1) else write(0);write(#9);
+for kk:=0 to n-1 do if x[kk] then write(1) else write(0);write(#9);
+writeln();
+  end;
   if i>r0 then
     begin
     l2:=row2-(r0 shl 1); if l2<0 then l2:=0; r2:=row2;
@@ -289,16 +272,34 @@ for i:=n-1 downto r0 do
     end;
   end;
 end;
+
+write('x ');for i:=0 to n-1 do if x[i] then write(1) else write(0);writeln;
 end;
 
 function GeneMat():boolean;
-var t:TVec;
+var x2,x1,x0:TVec;
 begin
-TimeMark('g');
-ApplyPoly(c,x,t,n-1,n);
+for i:=-2 to n do begin x2[i]:=false; x1[i]:=false; end;
+for i:=0 to n-1 do x1[i]:=x[i];
+{$ifdef disp}
+while IsNextMsg() do ;
+for i:=0 to n-1 do
+  if x1[i] then SetBBPixel(bb,i,0,black) else SetBBPixel(bb,i,0,white);
+{$endif}
+for j:=1 to n-1 do
+  begin
+  for i:=-2 to n do x0[i]:=false;
+  for i:=0 to n-1 do x0[i]:=not(x1[i-1] xor x1[i] xor x1[i+1] xor x2[i]);
+  {$ifdef disp}
+  for i:=0 to n-1 do
+    if x0[i] then SetBBPixel(bb,i,j,black) else SetBBPixel(bb,i,j,white);
+  {$endif}
+  for i:=-2 to n do x2[i]:=x1[i];
+  for i:=-2 to n do x1[i]:=x0[i];
+  end;
 GeneMat:=true;
-for i:=0 to n-1 do GeneMat:=GeneMat and (t[i]=y[i]);
-write(GeneMat);
+for i:=0 to n-1 do GeneMat:=GeneMat and (x1[i-1] xor x1[i] xor x1[i+1] xor x2[i]);
+writeln(GeneMat);
 end;
 
 begin
@@ -307,19 +308,12 @@ CreateWin(m,m);
 bb:=CreateBB(GetWin());
 bp:=CreateBMP(m,m);
 {$endif}
-QueryPerformanceFrequency(perfFreq);
-QueryPerformanceCounter(lastCounter);
-hasLastCounter:=false;
-{$ifdef disp}
-for n:=1 to m do
-{$else}
-for n:=9900 to 10000 do
-{$endif}
+for n:=1 to 20 do
   begin
-  write(n,#9);
+  writeln('#',n);
   MakeMat();
   CalcMat2();
-  GeneMat();{$ifdef disp}write('%');SaveMat('_T2');{$endif}
+  GeneMat();{$ifdef disp}SaveMat('_T2');{$endif}
   {$ifdef disp}if not(iswin()) then halt;{$endif}
   writeln();
   end;
