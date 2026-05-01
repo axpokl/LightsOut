@@ -11,13 +11,14 @@ const m=100000;
 
 type TVec=array[-2..m]of boolean;
      PVec=^TVec;
-     TDynVec=array of boolean;
 
 var n:longword;
 var i,j:longint;
 var x,y,y1,y_,y_1,f,f1,c,c1:TVec;
+var hf,hf1,hc,hc1:TVec;
 var k:longint;
-var o:boolean;
+var hk:longint;
+var o,ho:boolean;
 var perfFreq,lastCounter:Int64;
 var hasLastCounter:boolean;
 
@@ -128,7 +129,7 @@ if (not o) or (longint(n)<k) then
   VecZeroHi(f1,longint(n)); VecZeroHi(f,longint(n));
   VecZeroHi(c1,longint(n)); VecZeroHi(c,longint(n));
   f[0]:=true;
-  k:=0; o:=true;
+  k:=0; o:=true; ho:=false;
   end;
 for j:=k+1 to n do
   begin
@@ -169,8 +170,51 @@ for j:=k+1 to n do
       f1[i]:=old; c1[i]:=old1;
       end;
     end;
+  if j=longint(n div 2) then
+    begin
+    VecCopyHi(hf,f,j div 2);
+    VecCopyHi(hc,c,j div 2);
+    VecCopyHi(hf1,f1,j div 2);
+    VecCopyHi(hc1,c1,j div 2);
+    hk:=j;
+    ho:=true;
+    end;
   end;
 k:=n;
+end;
+
+procedure EnsureAB(nn:longword);
+var old,old1,newA,newB:boolean;
+var jj,ii,hiu:longint;
+begin
+if (not ho) or (longint(nn)<hk) then
+  begin
+  VecZeroHi(hf,longint(nn div 2)); VecZeroHi(hc,longint(nn div 2));
+  VecZeroHi(hf1,longint(nn div 2)); VecZeroHi(hc1,longint(nn div 2));
+  hf[0]:=true;
+  hk:=0; ho:=true;
+  end;
+for jj:=hk+1 to nn do
+  begin
+  if jj=1 then
+    begin
+    hf1[0]:=hf[0]; hc1[0]:=hc[0];
+    hf[0]:=false; hc[0]:=true;
+    end
+  else
+    begin
+    hiu:=jj div 2;
+    for ii:=hiu downto 0 do
+      begin
+      old:=hf[ii]; old1:=hc[ii];
+      if ii=0 then newA:=hf1[ii] else newA:=hf1[ii] xor hc[ii-1];
+      newB:=hf[ii] xor hc[ii] xor hc1[ii];
+      hf[ii]:=newA; hc[ii]:=newB;
+      hf1[ii]:=old; hc1[ii]:=old1;
+      end;
+    end;
+  end;
+hk:=nn;
 end;
 
 function GcdU(const va,vb:TVec; var vg,vu,vv:TVec; hi:longint):longint;
@@ -314,103 +358,6 @@ for j2:=0 to d do
   end;
 end;
 
-
-procedure ComposeURec(const src:TDynVec; len:longint; var dst:TDynVec);
-var even,odd,ev,od:TDynVec;
-var le,lo,i,outlen:longint;
-begin
-while (len>0) and not(src[len-1]) do dec(len);
-if len<=0 then
-  begin
-  SetLength(dst,0);
-  exit;
-  end;
-if len=1 then
-  begin
-  SetLength(dst,1);
-  dst[0]:=src[0];
-  exit;
-  end;
-le:=(len+1) div 2;
-lo:=len div 2;
-SetLength(even,le);
-SetLength(odd,lo);
-for i:=0 to le-1 do even[i]:=src[i*2];
-for i:=0 to lo-1 do odd[i]:=src[i*2+1];
-ComposeURec(even,le,ev);
-ComposeURec(odd,lo,od);
-outlen:=2*len-1;
-SetLength(dst,outlen);
-for i:=0 to outlen-1 do dst[i]:=false;
-if Length(ev)>0 then
-  for i:=0 to Length(ev)-1 do
-    if ev[i] then dst[i*2]:=not dst[i*2];
-if Length(od)>0 then
-  for i:=0 to Length(od)-1 do
-    if od[i] then
-      begin
-      dst[i*2+1]:=not dst[i*2+1];
-      dst[i*2+2]:=not dst[i*2+2];
-      end;
-while (outlen>0) and not(dst[outlen-1]) do dec(outlen);
-SetLength(dst,outlen);
-end;
-
-procedure BuildQFromUV(const vu,vv:TVec; var vq:TVec; hi,degmax:longint; var degq:longint);
-var su,sv,cu,cv:TDynVec;
-var du,dv,k2:longint;
-begin
-for k2:=-2 to hi+1 do vq[k2]:=false;
-du:=PolyDeg(vu,degmax);
-dv:=PolyDeg(vv,degmax);
-if dv>=0 then
-  begin
-  SetLength(sv,dv+1);
-  for k2:=0 to dv do sv[k2]:=vv[k2];
-  ComposeURec(sv,dv+1,cv);
-  if Length(cv)>0 then
-    for k2:=0 to Length(cv)-1 do
-      if (k2<=hi) and cv[k2] then vq[k2]:=not vq[k2];
-  end;
-if du>=0 then
-  begin
-  SetLength(su,du+1);
-  for k2:=0 to du do su[k2]:=vu[k2];
-  ComposeURec(su,du+1,cu);
-  if Length(cu)>0 then
-    for k2:=0 to Length(cu)-1 do
-      if (k2+1<=hi) and cu[k2] then vq[k2+1]:=not vq[k2+1];
-  end;
-degq:=PolyDeg(vq,hi);
-end;
-
-procedure ApplyBezoutHybrid(const vu,vv,vsrc:TVec; var vdst:TVec; hi,degmax:longint);
-var qx:TVec;
-var du,dv,d,est,degq:longint;
-begin
-du:=PolyDeg(vu,degmax);
-dv:=PolyDeg(vv,degmax);
-if du>dv then d:=du else d:=dv;
-if d<0 then
-  begin
-  VecZeroHi(vdst,hi+1);
-  exit;
-  end;
-est:=-1;
-if dv>=0 then est:=dv shl 1;
-if (du>=0) and (((du shl 1)+1)>est) then est:=(du shl 1)+1;
-if (est>=0) and (est<=hi) and (est*3<=d*5+16) then
-  begin
-  BuildQFromUV(vu,vv,qx,hi,degmax,degq);
-  if (degq>=0) and (degq*3<=d*5+16) then
-    begin
-    ApplyPoly(qx,vsrc,vdst,hi,degq);
-    exit;
-    end;
-  end;
-ApplyBezoutU(vu,vv,vsrc,vdst,hi,degmax);
-end;
-
 procedure ApplyCU(const va,vb,vsrc:TVec; var vdst:TVec; hi,degmax:longint);
 var cur0,cur1:TVec;
 var pcur,pnxt,pt:PVec;
@@ -448,17 +395,46 @@ end;
 
 procedure CalcMat2;
 var gu,qu,qv:TVec;
+var sa,sb,hu,su,sv:TVec;
 var v,z:TVec;
 var g0,g1,g2:TVec;
 var pg0,pg1,pg2,pt:PVec;
 var i0,r0,rU,jmax,row1,row2,row3,l0,l1,l2,r1,r2:longint;
+var m2,hiS,rr,du,dv:longint;
 begin
 TimeMark('c');
 TimeMark('q');
-rU:=GcdU(f,c,gu,qu,qv,longint(n div 2));
+if (n and 1)=0 then
+  begin
+  m2:=longint(n div 2);
+  EnsureAB(m2);
+  hiS:=m2 div 2;
+  for i:=0 to longint(n div 2) do
+    begin
+    gu[i]:=false; qu[i]:=false; qv[i]:=false;
+    end;
+  for i:=0 to hiS do
+    begin
+    sa[i]:=hf[i] xor hf1[i];
+    sb[i]:=hc[i] xor hc1[i];
+    end;
+  rr:=GcdU(sa,sb,hu,su,sv,hiS);
+  for i:=0 to rr do if hu[i] then gu[i shl 1]:=true;
+  du:=PolyDeg(su,hiS);
+  for i:=0 to du do if su[i] then
+    begin
+    qu[i shl 1]:=true;
+    if (i shl 1)+1<=longint(n div 2) then qv[(i shl 1)+1]:=not qv[(i shl 1)+1];
+    end;
+  dv:=PolyDeg(sv,hiS);
+  for i:=0 to dv do if sv[i] then qv[i shl 1]:=not qv[i shl 1];
+  rU:=rr shl 1;
+  end
+else
+  rU:=GcdU(f,c,gu,qu,qv,longint(n div 2));
 r0:=rU*2;
 TimeMark('z');
-ApplyBezoutHybrid(qu,qv,y,z,n-1,longint(n div 2));
+ApplyBezoutU(qu,qv,y,z,n-1,longint(n div 2));
 TimeMark('d');
 if r0=0 then
   begin

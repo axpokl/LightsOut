@@ -429,6 +429,80 @@ for j2:=0 to d do
   end;
 end;
 
+function BuildOddGUV(const ma,mb,mg,mu,mv:TVec; var gu,qu,qv:TVec; hi,srcHi:longint; extra:boolean):boolean;
+var tu,tv:TVec;
+var p,dg,du,dv,s:longint;
+begin
+VecZeroHi(gu,hi);
+VecZeroHi(qu,hi+1);
+VecZeroHi(qv,hi);
+VecZeroHi(tu,srcHi);
+VecZeroHi(tv,srcHi);
+for p:=0 to srcHi do begin tu[p]:=mu[p]; tv[p]:=mv[p]; end;
+if (not extra) and (tu[0] xor tv[0]) then
+  for p:=0 to srcHi do
+    begin
+    tu[p]:=tu[p] xor mb[p];
+    tv[p]:=tv[p] xor ma[p];
+    end;
+if (not extra) and (tu[0] xor tv[0]) then
+  begin
+  BuildOddGUV:=false;
+  exit;
+  end;
+dg:=PolyDeg(mg,srcHi);
+if dg>=0 then
+  for p:=0 to dg do if mg[p] then
+    begin
+    s:=p shl 1;
+    if extra then inc(s);
+    if s<=hi then gu[s]:=not gu[s];
+    end;
+du:=PolyDeg(tu,srcHi);
+dv:=PolyDeg(tv,srcHi);
+if extra then
+  begin
+  if du>=0 then
+    for p:=0 to du do if tu[p] then
+      begin
+      s:=p shl 1;
+      if s<=hi then qu[s]:=not qu[s];
+      if s+1<=hi then begin qu[s+1]:=not qu[s+1]; qv[s+1]:=not qv[s+1]; end;
+      end;
+  if dv>=0 then
+    for p:=0 to dv do if tv[p] then
+      begin
+      s:=p shl 1;
+      if s<=hi then qu[s]:=not qu[s];
+      end;
+  end
+else
+  begin
+  if du>=0 then
+    for p:=0 to du do if tu[p] then
+      begin
+      s:=p shl 1;
+      if s<=hi+1 then qu[s]:=not qu[s];
+      if s+1<=hi+1 then qu[s+1]:=not qu[s+1];
+      if s<=hi then qv[s]:=not qv[s];
+      end;
+  if dv>=0 then
+    for p:=0 to dv do if tv[p] then
+      begin
+      s:=p shl 1;
+      if s<=hi+1 then qu[s]:=not qu[s];
+      end;
+  if qu[0] then
+    begin
+    BuildOddGUV:=false;
+    exit;
+    end;
+  for p:=0 to hi do qu[p]:=qu[p+1];
+  qu[hi+1]:=false;
+  end;
+BuildOddGUV:=true;
+end;
+
 procedure CalcMat2;
 var gu,qu,qv:TVec;
 var sa,sb,hu,su,sv:TVec;
@@ -465,7 +539,16 @@ if (n and 1)=0 then
   rU:=rr shl 1;
   end
 else
-  rU:=GcdU(f,c,gu,qu,qv,longint(n div 2));
+  begin
+  m2:=longint(n div 2);
+  EnsureAB(m2);
+  hiS:=m2 div 2;
+  rr:=GcdU(hf,hc,hu,su,sv,hiS);
+  if BuildOddGUV(hf,hc,hu,su,sv,gu,qu,qv,longint(n div 2),hiS,(m2 mod 3)=2) then
+    rU:=PolyDeg(gu,longint(n div 2))
+  else
+    rU:=GcdU(f,c,gu,qu,qv,longint(n div 2));
+  end;
 r0:=rU*2;
 writeln('gcd',#9,r0,#9);
 write('U ');for i:=0 to n div 2 do if qu[i] then write(1) else write(0);writeln;

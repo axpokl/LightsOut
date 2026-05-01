@@ -25,9 +25,12 @@ H23	使用SOS DP优化c生成，末尾行全0优化x和z，r带宽优化x
 H24	优化gcd，高位处理后只处理低位，使时间减半
 H25	使用统一的ApplyPoly，优化z和d，仅扩散扫描
 H26	优化g，利用ApplyPoly，使其验证更快
-H27	优化TVec，使其不受m和sosN的影响
-H28	删除BuildC，还是递推c
+H27	优化x，使用TVec，使其不受m和sosN的影响
+H28	优化c，删除BuildC，还是递推c
 H29	删除冗余变量和代码
 H30	优化makemat，原地滚动，减少清零和复制，使时间减半
-H31	优化gcd，使用gcd(A,B)替代gcd(f,c)，使时间减半
-H32	继续优化gcd(A,B)，使z的时间减少
+H31	优化gcd，使用gcd(A,B)替代gcd(f,c)，使时间大幅减少
+H32	优化gcd(A,B)，使z的时间减少
+H33	优化gcd(A,B)，使gcd在偶数时时间减半
+H34	优化gcd(A,B)，使gcd在奇数时时间减半，不显著
+

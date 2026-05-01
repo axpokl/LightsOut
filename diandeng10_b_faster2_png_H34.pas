@@ -744,6 +744,86 @@ for j2:=0 to d do
 MaskDeg(vdst,hi);
 end;
 
+function BuildOddGUV(const ma,mb,mg,mu,mv:TVec; var gu,qu,qv:TVec; hi,srcHi:longint; extra:boolean):boolean;
+var tu,tv:TVec;
+var p,dg,du,dv,s:longint;
+begin
+VecZero(gu);
+VecZero(qu);
+VecZero(qv);
+VecCopy(tu,mu); MaskDeg(tu,srcHi);
+VecCopy(tv,mv); MaskDeg(tv,srcHi);
+if (not extra) and ((GetBit(tu,0) xor GetBit(tv,0))<>0) then
+  begin
+  VecXorEq(tu,mb); MaskDeg(tu,srcHi);
+  VecXorEq(tv,ma); MaskDeg(tv,srcHi);
+  end;
+if (not extra) and ((GetBit(tu,0) xor GetBit(tv,0))<>0) then
+  begin
+  BuildOddGUV:=false;
+  exit;
+  end;
+dg:=TopBitLE(mg,srcHi);
+if dg>=0 then
+  for p:=0 to dg do if GetBit(mg,p)<>0 then
+    begin
+    s:=p shl 1;
+    if extra then inc(s);
+    if s<=hi then SetBit(gu,s,GetBit(gu,s) xor 1);
+    end;
+du:=TopBitLE(tu,srcHi);
+dv:=TopBitLE(tv,srcHi);
+if extra then
+  begin
+  if du>=0 then
+    for p:=0 to du do if GetBit(tu,p)<>0 then
+      begin
+      s:=p shl 1;
+      if s<=hi then SetBit(qu,s,GetBit(qu,s) xor 1);
+      if s+1<=hi then
+        begin
+        SetBit(qu,s+1,GetBit(qu,s+1) xor 1);
+        SetBit(qv,s+1,GetBit(qv,s+1) xor 1);
+        end;
+      end;
+  if dv>=0 then
+    for p:=0 to dv do if GetBit(tv,p)<>0 then
+      begin
+      s:=p shl 1;
+      if s<=hi then SetBit(qu,s,GetBit(qu,s) xor 1);
+      end;
+  end
+else
+  begin
+  if du>=0 then
+    for p:=0 to du do if GetBit(tu,p)<>0 then
+      begin
+      s:=p shl 1;
+      if s<=hi+1 then SetBit(qu,s,GetBit(qu,s) xor 1);
+      if s+1<=hi+1 then SetBit(qu,s+1,GetBit(qu,s+1) xor 1);
+      if s<=hi then SetBit(qv,s,GetBit(qv,s) xor 1);
+      end;
+  if dv>=0 then
+    for p:=0 to dv do if GetBit(tv,p)<>0 then
+      begin
+      s:=p shl 1;
+      if s<=hi+1 then SetBit(qu,s,GetBit(qu,s) xor 1);
+      end;
+  if GetBit(qu,0)<>0 then
+    begin
+    BuildOddGUV:=false;
+    exit;
+    end;
+  for p:=0 to hi do SetBit(qu,p,GetBit(qu,p+1));
+  SetBit(qu,hi+1,0);
+  MaskDeg(qu,hi);
+  end;
+MaskDeg(gu,hi);
+MaskDeg(qu,hi);
+MaskDeg(qv,hi);
+BuildOddGUV:=true;
+end;
+
 procedure CalcMat2;
 var gu,qu,qv:TVec;
 var sa,sb,hu,su,sv:TVec;
@@ -833,7 +913,16 @@ if (n and 1)=0 then
   rU:=rr shl 1;
   end
 else
-  rU:=GcdU(f,c,gu,qu,qv,longint(n div 2));
+  begin
+  m2:=longint(n div 2);
+  EnsureAB(m2);
+  hiS:=m2 div 2;
+  rr:=GcdU(hf,hc,hu,su,sv,hiS);
+  if BuildOddGUV(hf,hc,hu,su,sv,gu,qu,qv,longint(n div 2),hiS,(m2 mod 3)=2) then
+    rU:=TopBitLE(gu,longint(n div 2))
+  else
+    rU:=GcdU(f,c,gu,qu,qv,longint(n div 2));
+  end;
 r0:=rU*2;
 TimeMark('z');
 ApplyBezoutU(qu,qv,y,z,n-1,longint(n div 2));

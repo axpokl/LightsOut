@@ -1,11 +1,13 @@
-{$define disp}
+//{$define disp}
 program diandeng;
 
 {$ifdef disp}
-uses display;
+uses Windows, display;
+const m=1000;
+{$else}
+uses Windows;
+const m=100000;
 {$endif}
-
-const m=2000;
 
 type TVec=array[-2..m]of boolean;
      PVec=^TVec;
@@ -17,11 +19,30 @@ var hf,hf1,hc,hc1:TVec;
 var k:longint;
 var hk:longint;
 var o,ho:boolean;
+var perfFreq,lastCounter:Int64;
+var hasLastCounter:boolean;
 
 {$ifdef disp}
 var bb:pbitbuf;
 var bp:pbitmap;
 {$endif}
+
+function TimeMark(ch:char):Double;
+var c:Int64;
+var ms:Double;
+begin
+  QueryPerformanceCounter(c);
+  if not hasLastCounter then
+  begin
+    ms:=0;
+    hasLastCounter:=true;
+  end
+  else
+    ms:=(c-lastCounter)*1000.0/perfFreq;
+  lastCounter:=c;
+  TimeMark:=ms;
+  write(ms:8:3,#9,ch);
+end;
 
 {$ifdef disp}
 procedure SaveMat(s:ansistring);
@@ -34,7 +55,6 @@ SaveBMP(bp,'png'+s+'/'+i2s(n)+'.png');
 ReleaseBMP(bp);
 end;
 {$endif}
-
 
 procedure VecZeroHi(var a:TVec;hi:longint);
 var k2:longint;
@@ -78,17 +98,17 @@ for j2:=0 to d do
   if j2>=d then break;
   l2:=l-1; if l2<0 then l2:=0;
   r2:=r+1; if r2>hi then r2:=hi;
-  if l-2>=-2 then pcur^[l-2]:=false;
-  if l-1>=-2 then pcur^[l-1]:=false;
-  if r+1<=hi+1 then pcur^[r+1]:=false;
+  pcur^[l-2]:=false;
+  pcur^[l-1]:=false;
+  pcur^[r+1]:=false;
   if r+2<=hi+1 then pcur^[r+2]:=false;
   for k2:=l2 to r2 do pnxt^[k2]:=pcur^[k2-1] xor pcur^[k2+1];
   while (l2<=r2) and not(pnxt^[l2]) do inc(l2);
   if l2>r2 then break;
   while not(pnxt^[r2]) do dec(r2);
-  if l2-2>=-2 then pnxt^[l2-2]:=false;
-  if l2-1>=-2 then pnxt^[l2-1]:=false;
-  if r2+1<=hi+1 then pnxt^[r2+1]:=false;
+  pnxt^[l2-2]:=false;
+  pnxt^[l2-1]:=false;
+  pnxt^[r2+1]:=false;
   if r2+2<=hi+1 then pnxt^[r2+2]:=false;
   pt:=pcur;
   pcur:=pnxt;
@@ -98,11 +118,11 @@ for j2:=0 to d do
   end;
 end;
 
-
 procedure MakeMat();
 var old,old1,prev,cur,nxt,newA,newB:boolean;
 var hiu:longint;
 begin
+TimeMark('m');
 if (not o) or (longint(n)<k) then
   begin
   VecZeroHi(y1,longint(n)); VecZeroHi(y,longint(n)); VecZeroHi(y_1,longint(n)); VecZeroHi(y_,longint(n));
@@ -161,8 +181,6 @@ for j:=k+1 to n do
     end;
   end;
 k:=n;
-write('A ');for i:=0 to n div 2 do if f[i] then write(1) else write(0);writeln;
-write('B ');for i:=0 to n div 2 do if c[i] then write(1) else write(0);writeln;
 end;
 
 procedure EnsureAB(nn:longword);
@@ -197,60 +215,6 @@ for jj:=hk+1 to nn do
     end;
   end;
 hk:=nn;
-end;
-
-function gcd(const vf,vg:TVec; var vd,vr:TVec):longint;
-var f0a,g0a,vxa,vya:TVec;
-var f0,g0,vx,vy,vt:PVec;
-var kf,kg,kvx,kvy,shift,p,top,lim:longint;
-begin
-f0:=@f0a; g0:=@g0a; vx:=@vxa; vy:=@vya;
-for p:=0 to n do
-  begin
-  f0^[p]:=vf[p]; g0^[p]:=vg[p];
-  vx^[p]:=false; vy^[p]:=false;
-  end;
-kf:=n; while (kf>=0) and not(f0^[kf]) do dec(kf);
-kg:=n; while (kg>=0) and not(g0^[kg]) do dec(kg);
-kvx:=-1;
-kvy:=0;
-vy^[0]:=true;
-while true do
-  begin
-  if kf<kg then
-    begin
-    vt:=f0; f0:=g0; g0:=vt;
-    vt:=vx; vx:=vy; vy:=vt;
-    p:=kf; kf:=kg; kg:=p;
-    p:=kvx; kvx:=kvy; kvy:=p;
-    end;
-  if kg<0 then
-    begin
-    VecCopyHi(vd,f0^,longint(n));
-    VecCopyHi(vr,vx^,longint(n));
-    gcd:=kf;
-    exit;
-    end;
-  while kf>=kg do
-    begin
-    shift:=kf-kg;
-    for p:=0 to kg do if g0^[p] then f0^[p+shift]:=f0^[p+shift] xor true;
-    top:=kf-1;
-    while (top>=0) and not(f0^[top]) do dec(top);
-    kf:=top;
-    if kvy>=0 then
-      begin
-      top:=kvx;
-      if kvy+shift>longint(n) then top:=longint(n)
-      else if kvy+shift>top then top:=kvy+shift;
-      lim:=kvy;
-      if lim>longint(n)-shift then lim:=longint(n)-shift;
-      for p:=0 to lim do if vy^[p] then vx^[p+shift]:=vx^[p+shift] xor true;
-      while (top>=0) and not(vx^[top]) do dec(top);
-      kvx:=top;
-      end;
-    end;
-  end;
 end;
 
 function GcdU(const va,vb:TVec; var vg,vu,vv:TVec; hi:longint):longint;
@@ -429,15 +393,91 @@ for j2:=0 to d do
   end;
 end;
 
+function BuildOddGUV(const ma,mb,mg,mu,mv:TVec; var gu,qu,qv:TVec; hi,srcHi:longint; extra:boolean):boolean;
+var tu,tv:TVec;
+var p,dg,du,dv,s:longint;
+begin
+VecZeroHi(gu,hi);
+VecZeroHi(qu,hi+1);
+VecZeroHi(qv,hi);
+VecZeroHi(tu,srcHi);
+VecZeroHi(tv,srcHi);
+for p:=0 to srcHi do begin tu[p]:=mu[p]; tv[p]:=mv[p]; end;
+if (not extra) and (tu[0] xor tv[0]) then
+  for p:=0 to srcHi do
+    begin
+    tu[p]:=tu[p] xor mb[p];
+    tv[p]:=tv[p] xor ma[p];
+    end;
+if (not extra) and (tu[0] xor tv[0]) then
+  begin
+  BuildOddGUV:=false;
+  exit;
+  end;
+dg:=PolyDeg(mg,srcHi);
+if dg>=0 then
+  for p:=0 to dg do if mg[p] then
+    begin
+    s:=p shl 1;
+    if extra then inc(s);
+    if s<=hi then gu[s]:=not gu[s];
+    end;
+du:=PolyDeg(tu,srcHi);
+dv:=PolyDeg(tv,srcHi);
+if extra then
+  begin
+  if du>=0 then
+    for p:=0 to du do if tu[p] then
+      begin
+      s:=p shl 1;
+      if s<=hi then qu[s]:=not qu[s];
+      if s+1<=hi then begin qu[s+1]:=not qu[s+1]; qv[s+1]:=not qv[s+1]; end;
+      end;
+  if dv>=0 then
+    for p:=0 to dv do if tv[p] then
+      begin
+      s:=p shl 1;
+      if s<=hi then qu[s]:=not qu[s];
+      end;
+  end
+else
+  begin
+  if du>=0 then
+    for p:=0 to du do if tu[p] then
+      begin
+      s:=p shl 1;
+      if s<=hi+1 then qu[s]:=not qu[s];
+      if s+1<=hi+1 then qu[s+1]:=not qu[s+1];
+      if s<=hi then qv[s]:=not qv[s];
+      end;
+  if dv>=0 then
+    for p:=0 to dv do if tv[p] then
+      begin
+      s:=p shl 1;
+      if s<=hi+1 then qu[s]:=not qu[s];
+      end;
+  if qu[0] then
+    begin
+    BuildOddGUV:=false;
+    exit;
+    end;
+  for p:=0 to hi do qu[p]:=qu[p+1];
+  qu[hi+1]:=false;
+  end;
+BuildOddGUV:=true;
+end;
+
 procedure CalcMat2;
 var gu,qu,qv:TVec;
 var sa,sb,hu,su,sv:TVec;
-var v,v0,z:TVec;
+var v,z:TVec;
 var g0,g1,g2:TVec;
 var pg0,pg1,pg2,pt:PVec;
-var i0,r0,rU,kk,jmax,row1,row2,row3,l0,l1,l2,r1,r2:longint;
+var i0,r0,rU,jmax,row1,row2,row3,l0,l1,l2,r1,r2:longint;
 var m2,hiS,rr,du,dv:longint;
 begin
+TimeMark('c');
+TimeMark('q');
 if (n and 1)=0 then
   begin
   m2:=longint(n div 2);
@@ -465,28 +505,32 @@ if (n and 1)=0 then
   rU:=rr shl 1;
   end
 else
-  rU:=GcdU(f,c,gu,qu,qv,longint(n div 2));
+  begin
+  m2:=longint(n div 2);
+  EnsureAB(m2);
+  hiS:=m2 div 2;
+  rr:=GcdU(hf,hc,hu,su,sv,hiS);
+  if BuildOddGUV(hf,hc,hu,su,sv,gu,qu,qv,longint(n div 2),hiS,(m2 mod 3)=2) then
+    rU:=PolyDeg(gu,longint(n div 2))
+  else
+    rU:=GcdU(f,c,gu,qu,qv,longint(n div 2));
+  end;
 r0:=rU*2;
-writeln('gcd',#9,r0,#9);
-write('U ');for i:=0 to n div 2 do if qu[i] then write(1) else write(0);writeln;
-write('V ');for i:=0 to n div 2 do if qv[i] then write(1) else write(0);writeln;
-write('G ');for i:=0 to n div 2 do if gu[i] then write(1) else write(0);writeln;
-for i:=-1 to n do v[i]:=y[i];
-write('y ');for i:=0 to n-1 do if v[i] then write(1) else write(0);writeln;
+TimeMark('z');
 ApplyBezoutU(qu,qv,y,z,n-1,longint(n div 2));
+TimeMark('d');
 if r0=0 then
-  for i:=0 to n-1 do x[i]:=z[i]
+  begin
+  for i:=0 to n-1 do x[i]:=z[i];
+  end
 else
 begin
-write('z ');for i:=0 to n-1 do if z[i] then write(1) else write(0);writeln;
-for i:=-2 to n do begin g0[i]:=false; g1[i]:=false; g2[i]:=false; v[i]:=false; v0[i]:=false; end;
+for i:=-2 to n do begin g0[i]:=false; g1[i]:=false; g2[i]:=false; v[i]:=false; end;
 v[0]:=true;
 ApplyPolyU(gu,v,g0,n-1,rU);
-if n-r0-1<0 then jmax:=0 else jmax:=n-r0-1;
-for i:=-2 to n do v[i]:=g0[i];
-writeln('d');
-write(0,#9);for i:=0 to n-1 do if g0[i] then write(1) else write(0);writeln;
+TimeMark('x');
 pg0:=@g0; pg1:=@g1; pg2:=@g2;
+if n-r0-1<0 then jmax:=0 else jmax:=n-r0-1;
 if jmax=0 then VecCopyHi(pg1^,pg0^,longint(n))
 else if r0<jmax then
   begin
@@ -508,10 +552,8 @@ else
     begin
     for i:=-2 to n do pg0^[i]:=false;
     for i:=0 to n-1 do pg0^[i]:=pg1^[i-1] xor pg1^[i+1] xor pg2^[i];
-    write(j,#9);for i:=0 to n-1 do if pg0^[i] then write(1) else write(0);writeln;
     pt:=pg0; pg0:=pg2; pg2:=pg1; pg1:=pt;
     end;
-  for j:=jmax+1 to n-1 do begin write(j,#9);for i:=0 to n-1 do write(0);writeln; end;
   end;
 for i:=0 to n-1 do x[i]:=false;
 row1:=n-1;
@@ -521,17 +563,11 @@ for i:=n-1 downto r0 do
   begin
   l1:=row1-(r0 shl 1); if l1<0 then l1:=0; r1:=row1; if r1>longint(n)-1 then r1:=longint(n)-1;
   if z[i] then
-  begin
+    begin
     i0:=i-r0;
-write(i,#9,i0,#9);
-for kk:=0 to n-1 do if z[kk] then write(1) else write(0);write(#9);
     for j:=l1 to r1 do z[j]:=z[j] xor pg1^[j];
     x[i0]:=true;
-for kk:=0 to n-1 do if pg1^[kk] then write(1) else write(0);write(#9);
-for kk:=0 to n-1 do if z[kk] then write(1) else write(0);write(#9);
-for kk:=0 to n-1 do if x[kk] then write(1) else write(0);write(#9);
-writeln();
-  end;
+    end;
   if i>r0 then
     begin
     l2:=row2-(r0 shl 1); if l2<0 then l2:=0; r2:=row2;
@@ -547,33 +583,16 @@ writeln();
     end;
   end;
 end;
-write('x ');for i:=0 to n-1 do if x[i] then write(1) else write(0);writeln;
 end;
 
 function GeneMat():boolean;
-var x2,x1,x0:TVec;
+var t:TVec;
 begin
-for i:=-2 to n do begin x2[i]:=false; x1[i]:=false; end;
-for i:=0 to n-1 do x1[i]:=x[i];
-{$ifdef disp}
-while IsNextMsg() do ;
-for i:=0 to n-1 do
-  if x1[i] then SetBBPixel(bb,i,0,black) else SetBBPixel(bb,i,0,white);
-{$endif}
-for j:=1 to n-1 do
-  begin
-  for i:=-2 to n do x0[i]:=false;
-  for i:=0 to n-1 do x0[i]:=not(x1[i-1] xor x1[i] xor x1[i+1] xor x2[i]);
-  {$ifdef disp}
-  for i:=0 to n-1 do
-    if x0[i] then SetBBPixel(bb,i,j,black) else SetBBPixel(bb,i,j,white);
-  {$endif}
-  for i:=-2 to n do x2[i]:=x1[i];
-  for i:=-2 to n do x1[i]:=x0[i];
-  end;
+TimeMark('g');
+ApplyCU(f,c,x,t,n-1,longint(n div 2));
 GeneMat:=true;
-for i:=0 to n-1 do GeneMat:=GeneMat and (x1[i-1] xor x1[i] xor x1[i+1] xor x2[i]);
-writeln(GeneMat);
+for i:=0 to n-1 do GeneMat:=GeneMat and (t[i]=y[i]);
+write(GeneMat);
 end;
 
 begin
@@ -582,12 +601,19 @@ CreateWin(m,m);
 bb:=CreateBB(GetWin());
 bp:=CreateBMP(m,m);
 {$endif}
-for n:=1 to 20 do
+QueryPerformanceFrequency(perfFreq);
+QueryPerformanceCounter(lastCounter);
+hasLastCounter:=false;
+{$ifdef disp}
+for n:=1 to m do
+{$else}
+for n:=9900 to 10000 do
+{$endif}
   begin
-  writeln('#',n);
+  write(n,#9);
   MakeMat();
   CalcMat2();
-  GeneMat();{$ifdef disp}SaveMat('_T2');{$endif}
+  GeneMat();{$ifdef disp}write('%');SaveMat('_T2');{$endif}
   {$ifdef disp}if not(iswin()) then halt;{$endif}
   writeln();
   end;
