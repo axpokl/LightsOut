@@ -429,7 +429,6 @@ end;
 end;
 
 function GeneMat():boolean;
-{$ifdef verify}
 var t:TVec;
 begin
 TimeMark('g');
@@ -438,13 +437,6 @@ GeneMat:=true;
 for i:=0 to n-1 do GeneMat:=GeneMat and (t[i]=y[i]);
 write(GeneMat);
 end;
-{$else}
-begin
-TimeMark('g');
-GeneMat:=true;
-write(GeneMat);
-end;
-{$endif}
 
 begin
 {$ifdef disp}
