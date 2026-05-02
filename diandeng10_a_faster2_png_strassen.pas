@@ -275,7 +275,7 @@ end;
 procedure RecursiveRREFSubmatrix(var A,R:TMat; r0,c0,sz:Integer);
 var mid,sz1,sz2,i,j,pivotRow,rr,cc,cnt1,cnt2:Integer;
     pivotRows1,pivotCols1,pivotRows2,pivotCols2:array of Integer;
-    temp,Sblock,A22:TBoolMat;
+    temp,Sblock:TBoolMat;
 begin
   if sz<=BLOCK_THRESHOLD then begin StandardGaussJordanSubmatrix(A,R,r0,c0,sz); exit; end;
   mid:=sz div 2; sz1:=mid; sz2:=sz-mid;

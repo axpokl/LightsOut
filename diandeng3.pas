@@ -30,6 +30,7 @@ close(f);
 end;
 
 begin
+for i:=0 to 101 do c[i]:=0;
 assign(f,'diandeng.txt');
 for k:=1 to 50 do
   begin

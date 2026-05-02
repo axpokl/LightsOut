@@ -2,7 +2,7 @@ program diandeng;
 const w=6;h=w;step=100;
 var a:array[1..h,1..w]of shortint;
     b:array[0..h+1,0..w+1]of shortint;
-    i,j,k:longint;
+    i,j:longint;
     n,r,s,p,q:int64;
     c:array[0..w]of int64;
     f:text;
@@ -26,6 +26,7 @@ for i:=1 to h do
 end;
 
 begin
+for i:=0 to w do c[i]:=0;
 assign(f,'c:\o.txt');
 rewrite(f);
 p:=1;
@@ -33,6 +34,7 @@ for j:=1 to w do
   p:=p shl 1;
 q:=p div step;
 writeln('start');
+n:=0;
 repeat
 n:=n+1;
 r:=n;
