@@ -1,0 +1,2 @@
+for /L %%i in (22,1,24) do @(echo ===== diandeng10_b_faster2_png_H%%i.exe ===== & ".\diandeng10_b_faster2_png_H%%i.exe" & echo.) >> all_results_b.txt 2>&1
+for /L %%i in (22,1,24) do @(echo ===== diandeng10_a_faster2_png_H%%i.exe ===== & ".\diandeng10_a_faster2_png_H%%i.exe" & echo.) >> all_results_a.txt 2>&1
