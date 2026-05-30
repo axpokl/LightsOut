@@ -11,7 +11,7 @@ var mp,mq:TMat;
 var n,l,t,s:longint;
 var i,j,k:longint;
 var pi,pj,pk:longint;
-var si,sj,sk:longint;
+var si,sk:longint;
 var v:longword;
 
 procedure print(var m:TMat);

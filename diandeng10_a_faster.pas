@@ -16,7 +16,7 @@ var s:longword;
 {$endif}
 
 procedure PrintMat();
-var i,j,k:longint;
+var i,j:longint;
 begin
 writeln();
 for j:=-1 to n-1 do

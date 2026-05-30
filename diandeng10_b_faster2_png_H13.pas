@@ -25,7 +25,7 @@ var wn:longint;
 var lastMask:LongWord;
 var ones:TVec;
 var v0,v1,v2,v3:TVec;
-var p,q,x,y,z,y0,g,vx,vy:TVec;
+var p,q,x,y,z,g,vx,vy:TVec;
 
 {$ifdef disp}
 var bb:pbitbuf;

@@ -337,7 +337,7 @@ end;
 
 procedure CalcMat2;
 var c,q,g:TVec;
-var v,v0,z:TVec;
+var v,z:TVec;
 var g0,g1,g2:TVec;
 var i0,r0,jmax:longint;
 begin

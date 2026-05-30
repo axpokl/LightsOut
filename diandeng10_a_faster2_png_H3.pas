@@ -15,7 +15,6 @@ var i,j,k:longint;
 
 {$ifdef disp}
 var bb:pbitbuf;
-var s:longword=0;
 var b:pbitmap;
 {$endif}
 
@@ -136,7 +135,7 @@ var f:array[-1..m,-1..m]of boolean;
 
 procedure CalcMat2;
 var h,p,q,x,y,c:array[-1..m]of boolean;
-var kf,kg,sh,i,j,t,res:longint;
+var kf,kg,sh,i,j,t:longint;
 var done:boolean;
 begin
 writeln(n);
@@ -154,11 +153,11 @@ for i:=0 to m do begin h[i]:=h[i]; p[i]:=p[i]; x[i]:=false; y[i]:=false; end;
 y[0]:=true;
 kf:=-1; for i:=n downto 0 do if h[i] then begin kf:=i; break; end;
 kg:=-1; for i:=n downto 0 do if p[i] then begin kg:=i; break; end;
-done:=false; res:=-1;
+done:=false;
 while not done do
 begin
- if kf<0 then begin for i:=0 to n do q[i]:=y[i]; res:=kg; done:=true; end
- else if kg<0 then begin for i:=0 to n do q[i]:=x[i]; res:=kf; done:=true; end
+ if kf<0 then begin for i:=0 to n do q[i]:=y[i]; done:=true; end
+ else if kg<0 then begin for i:=0 to n do q[i]:=x[i]; done:=true; end
  else
   begin
    if kf<kg then begin for i:=0 to n do begin c[i]:=h[i]; h[i]:=p[i]; p[i]:=c[i]; c[i]:=x[i]; x[i]:=y[i]; y[i]:=c[i]; end; t:=kf; kf:=kg; kg:=t; end;

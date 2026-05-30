@@ -6,7 +6,6 @@ var
     am:packed array[1..maxn*maxn]of boolean;
     //a:packed array[1..maxn*maxn,1..maxn*maxn+1]of boolean;
     i,j,k,l:longint;
-    f:text;
     h,w,m,t:longint;
     s:longint;
 
@@ -56,8 +55,7 @@ if y=m+1 then am[x]:=b;
 end;
 
 procedure outputall();
-var i,j,k:longword;
-var b:pbitmap;
+var i,j:longword;
 begin
 k:=5;
 for j:=1 to m do

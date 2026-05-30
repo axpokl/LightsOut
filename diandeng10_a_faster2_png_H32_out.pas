@@ -386,7 +386,7 @@ end;
 
 procedure CalcMat2;
 var gu,qu,qv:TVec;
-var v,v0,z:TVec;
+var v,z:TVec;
 var g0,g1,g2:TVec;
 var pg0,pg1,pg2,pt:PVec;
 var i0,r0,rU,kk,jmax,row1,row2,row3,l0,l1,l2,r1,r2:longint;
@@ -405,7 +405,7 @@ if r0=0 then
 else
 begin
 write('z ');for i:=0 to n-1 do if z[i] then write(1) else write(0);writeln;
-for i:=-2 to n do begin g0[i]:=false; g1[i]:=false; g2[i]:=false; v[i]:=false; v0[i]:=false; end;
+for i:=-2 to n do begin g0[i]:=false; g1[i]:=false; g2[i]:=false; v[i]:=false; end;
 v[0]:=true;
 ApplyPolyU(gu,v,g0,n-1,rU);
 if n-r0-1<0 then jmax:=0 else jmax:=n-r0-1;

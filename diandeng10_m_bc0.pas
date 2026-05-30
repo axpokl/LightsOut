@@ -9,7 +9,7 @@ var l:array[-1..m,-2..m]of boolean;
 var i,j,k:longint;
 
 procedure PrintMat();
-var i,j,k:longint;
+var i,j:longint;
 begin
 writeln();
 for j:=0 to n-1 do

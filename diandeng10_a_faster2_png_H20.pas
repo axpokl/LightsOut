@@ -14,7 +14,7 @@ type TVec=array[-2..m]of boolean;
 
 var n:longword;
 var i,j:longint;
-var y,y0,f,x:TVec;
+var y,f,x:TVec;
 var y1,y2,y01,y02,f1,f2:TVec;
 var lastLN,lastFN:longint;
 var matInit:boolean;
@@ -109,7 +109,7 @@ for j:=lastFN+1 to n do
   f2:=f1; f1:=f3;
   end;
 lastFN:=n;
-y:=y1; y0:=y01; f:=f1;
+y:=y1; f:=f1;
 end;
 
 function gcd(vf,vg:TVec; var vd,vr:TVec):longint;

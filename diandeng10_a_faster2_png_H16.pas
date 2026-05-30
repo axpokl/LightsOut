@@ -13,7 +13,7 @@ type TMat=array[-2..m,-2..m]of Boolean;
 type TVec=array[-2..m]of boolean;
 
 var n:longword;
-var l,l0,f,c:TVec;
+var l,f,c:TVec;
 var ll2,ll1,ll02,ll01,ff2,ff1,cc2,cc1:TVec;
 var lastLN,lastFN:longint;
 var matInit:boolean;
@@ -118,7 +118,7 @@ for j:=lastFN+1 to n do
   cc2:=cc1; cc1:=cn;
   end;
 lastFN:=n;
-l:=ll1; l0:=ll01; f:=ff1; c:=cc1;
+l:=ll1; f:=ff1; c:=cc1;
 end;
 
 function gcd(vf,vg:TVec; var vd,vr:TVec):longint;

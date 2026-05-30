@@ -16,7 +16,6 @@ var i,j,k:longint;
 
 {$ifdef disp}
 var bb:pbitbuf;
-var s:longword=0;
 var b:pbitmap;
 {$endif}
 
@@ -144,7 +143,7 @@ while not done do
 end;
 
 procedure CalcMat2;
-var h,p,q,x,y,c,g:TVec;
+var h,p,q,x,y,c:TVec;
 var i,j:longint;
 begin
 writeln(n);
@@ -161,7 +160,6 @@ rev(h,p,q);
 write('q ');for i:=0 to n-1 do if q[i] then write(1) else write(0);writeln;
 write('y ');for i:=0 to n-1 do if l[i,-1] then write(1) else write(0);writeln;
 for i:=0 to n do y[i]:=l[i,-1];
-for i:=3 to 6 do g[i]:=true;
 //write('g ');for i:=0 to n-1 do if g[i] then write(1) else write(0);writeln;
 for i:=0 to n do x[i]:=false;
 for j:=0 to n-1 do 

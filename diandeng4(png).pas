@@ -2,7 +2,6 @@ program diandeng;
 uses display;
 var a:array[1..100*100,1..100*100+1]of shortint;
     i,j,k,l:longint;
-    f:text;
     h,w,m,t:longint;
     s:longint;
 

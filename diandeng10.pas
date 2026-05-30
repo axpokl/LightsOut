@@ -6,7 +6,7 @@ var l,l0,l1:array[0..m+1,-1..m+1]of boolean;
 var i,j,k:longword;
 
 procedure PrintMat();
-var i,j,k:longword;
+var i,j:longword;
 begin
 writeln();
 for j:=1 to n do

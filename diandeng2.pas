@@ -3,7 +3,7 @@ const w=6;h=w;step=100;
 var a:array[1..h,1..w]of shortint;
     b:array[0..h+1,0..w+1]of shortint;
     i,j:longint;
-    n,r,s,p,q:int64;
+    n,r,s,p:int64;
     c:array[0..w]of int64;
     f:text;
 
@@ -32,7 +32,6 @@ rewrite(f);
 p:=1;
 for j:=1 to w do
   p:=p shl 1;
-q:=p div step;
 writeln('start');
 n:=0;
 repeat

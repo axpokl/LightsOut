@@ -17,7 +17,6 @@ var i,j,k:longint;
 
 {$ifdef disp}
 var bb:pbitbuf;
-var s:longword=0;
 var b:pbitmap;
 {$endif}
 

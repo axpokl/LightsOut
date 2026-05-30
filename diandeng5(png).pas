@@ -3,7 +3,6 @@ uses display;
 const maxn=200;
 var a:packed array[1..maxn*maxn,1..maxn*maxn+1]of boolean;
     i,j,k,l:longint;
-    f:text;
     h,w,m,t:longint;
     s:longint;
 
@@ -24,7 +23,6 @@ const ac:array[boolean]of longword=(black,white);
 
 procedure outputall();
 var i,j:longword;
-var b:pbitmap;
 begin
 for j:=1 to m do
   for i:=1 to m+1 do

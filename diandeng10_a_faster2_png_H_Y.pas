@@ -15,7 +15,6 @@ var i,j,k:longint;
 
 {$ifdef disp}
 var bb:pbitbuf;
-var s:longword=0;
 var b:pbitmap;
 {$endif}
 
@@ -257,10 +256,10 @@ end;
 procedure CalcMat3;
 type TArr=array of Boolean; TMat=array of array of Boolean;
 var nn,i,j,row,col,mm,pivcnt:longint; xvec,y,z:TArr; Pn,Chi,ss,tt,gg:TArr; gmat:TMat; e,cv:TArr; M:TMat; pivr,pivc:array of longint; ssum:Boolean;
-function ArrTrim(a:TArr):TArr; var k,t:longint; begin if Length(a)=0 then begin SetLength(ArrTrim,1); ArrTrim[0]:=false; exit end; t:=Length(a)-1; while (t>0) and (not a[t]) do dec(t); SetLength(ArrTrim,t+1); for k:=0 to t do ArrTrim[k]:=a[k] end;
-function AddPoly(a,b:TArr):TArr; var m,k:longint; begin m:=Length(a); if Length(b)>m then m:=Length(b); SetLength(AddPoly,m); for k:=0 to m-1 do begin if k<Length(a) then AddPoly[k]:=a[k] else AddPoly[k]:=false; if k<Length(b) then AddPoly[k]:=AddPoly[k] xor b[k] end; AddPoly:=ArrTrim(AddPoly) end;
-function MulPoly(a,b:TArr):TArr; var i1,j1:longint; begin if (Length(a)=0) or (Length(b)=0) then begin SetLength(MulPoly,1); MulPoly[0]:=false; exit end; SetLength(MulPoly,Length(a)+Length(b)-1); for i1:=0 to High(MulPoly) do MulPoly[i1]:=false; for i1:=0 to High(a) do if a[i1] then for j1:=0 to High(b) do if b[j1] then MulPoly[i1+j1]:=MulPoly[i1+j1] xor true; MulPoly:=ArrTrim(MulPoly) end;
-function ShiftX(a:TArr):TArr; var i1:longint; begin SetLength(ShiftX,Length(a)+1); ShiftX[0]:=false; for i1:=0 to Length(a)-1 do ShiftX[i1+1]:=a[i1] end;
+function ArrTrim(a:TArr):TArr; var k,t:longint; r:TArr; begin if Length(a)=0 then begin SetLength(r,1); r[0]:=false; ArrTrim:=r; exit end; t:=Length(a)-1; while (t>0) and (not a[t]) do dec(t); SetLength(r,t+1); for k:=0 to t do r[k]:=a[k]; ArrTrim:=r end;
+function AddPoly(a,b:TArr):TArr; var m,k:longint; r:TArr; begin m:=Length(a); if Length(b)>m then m:=Length(b); SetLength(r,m); for k:=0 to m-1 do begin if k<Length(a) then r[k]:=a[k] else r[k]:=false; if k<Length(b) then r[k]:=r[k] xor b[k] end; AddPoly:=ArrTrim(r) end;
+function MulPoly(a,b:TArr):TArr; var i1,j1:longint; r:TArr; begin if (Length(a)=0) or (Length(b)=0) then begin SetLength(r,1); r[0]:=false; MulPoly:=r; exit end; SetLength(r,Length(a)+Length(b)-1); for i1:=0 to High(r) do r[i1]:=false; for i1:=0 to High(a) do if a[i1] then for j1:=0 to High(b) do if b[j1] then r[i1+j1]:=r[i1+j1] xor true; MulPoly:=ArrTrim(r) end;
+function ShiftX(a:TArr):TArr; var i1:longint; r:TArr; begin SetLength(r,Length(a)+1); r[0]:=false; for i1:=0 to Length(a)-1 do r[i1+1]:=a[i1]; ShiftX:=r end;
 procedure DivModPoly(a,b:TArr; var q,r:TArr); var aa,bb:TArr; t,i1:longint;
 begin aa:=ArrTrim(a); bb:=ArrTrim(b); if (Length(bb)=1) and (not bb[0]) then begin SetLength(q,1); q[0]:=false; r:=aa; exit end; if Length(aa)<Length(bb) then begin SetLength(q,1); q[0]:=false; r:=aa; exit end; SetLength(q,Length(aa)-Length(bb)+1); for i1:=0 to High(q) do q[i1]:=false; r:=aa; while Length(r)>=Length(bb) do begin t:=Length(r)-Length(bb); if r[High(r)] then begin q[t]:=q[t] xor true; for i1:=0 to High(bb) do r[t+i1]:=r[t+i1] xor bb[i1] end; r:=ArrTrim(r) end; q:=ArrTrim(q); r:=ArrTrim(r) end;
 procedure EGCD(a,b:TArr; var s,t,g:TArr); var s0,s1,t0,t1,r0,r1,q1,r2,tmp:TArr;
@@ -268,7 +267,7 @@ begin SetLength(s0,1); s0[0]:=true; SetLength(s1,1); s1[0]:=false; SetLength(t0,
 while not ((Length(r1)=1) and (not r1[0])) do begin DivModPoly(r0,r1,q1,r2); tmp:=s0; s0:=s1; s1:=AddPoly(tmp,MulPoly(q1,s1)); tmp:=t0; t0:=t1; t1:=AddPoly(tmp,MulPoly(q1,t1)); r0:=r1; r1:=r2 end; s:=ArrTrim(s0); t:=ArrTrim(t0); g:=ArrTrim(r0) end;
 function BuildPk(k:longint):TArr; var a,b,c:TArr; t:longint; begin SetLength(a,1); a[0]:=true; SetLength(b,2); b[0]:=false; b[1]:=true; if k=0 then begin BuildPk:=a; exit end; if k=1 then begin BuildPk:=b; exit end; for t:=2 to k do begin c:=AddPoly(ShiftX(b),a); a:=b; b:=c end; BuildPk:=ArrTrim(b) end;
 function BuildChi(nm:longint):TArr; var a,b,xb,xb1,c:TArr; t:longint; begin SetLength(a,1); a[0]:=true; SetLength(b,2); b[0]:=true; b[1]:=true; if nm=0 then begin BuildChi:=a; exit end; if nm=1 then begin BuildChi:=b; exit end; for t:=2 to nm do begin xb:=ShiftX(b); xb1:=AddPoly(xb,b); c:=AddPoly(xb1,a); a:=b; b:=ArrTrim(c) end; BuildChi:=ArrTrim(b) end;
-function ApplyT(v:TArr):TArr; var n1,i1:longint; acc:Boolean; begin n1:=Length(v); SetLength(ApplyT,n1); for i1:=0 to n1-1 do begin acc:=v[i1]; if i1>0 then acc:=acc xor v[i1-1]; if i1<n1-1 then acc:=acc xor v[i1+1]; ApplyT[i1]:=acc end end;
+function ApplyT(v:TArr):TArr; var n1,i1:longint; acc:Boolean; r:TArr; begin n1:=Length(v); SetLength(r,n1); for i1:=0 to n1-1 do begin acc:=v[i1]; if i1>0 then acc:=acc xor v[i1-1]; if i1<n1-1 then acc:=acc xor v[i1+1]; r[i1]:=acc end; ApplyT:=r end;
 function ApplyPolyT(poly,v:TArr):TArr; var acc,p:TArr; i1,n1:longint; begin n1:=Length(v); SetLength(acc,n1); for i1:=0 to n1-1 do acc[i1]:=false; p:=v; for i1:=0 to High(poly) do begin if poly[i1] then begin if Length(acc)=Length(p) then for n1:=0 to High(acc) do acc[n1]:=acc[n1] xor p[n1] end; if i1<High(poly) then p:=ApplyT(p) end; ApplyPolyT:=acc end;
 begin nn:=n; SetLength(xvec,nn); for i:=0 to nn-1 do xvec[i]:=l[i,-1]; Pn:=BuildPk(nn); Chi:=BuildChi(nn); EGCD(Pn,Chi,ss,tt,gg);
 SetLength(gmat,nn); for i:=0 to nn-1 do begin SetLength(gmat[i],nn); for j:=0 to nn-1 do gmat[i][j]:=false end;
