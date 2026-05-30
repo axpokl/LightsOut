@@ -10,7 +10,7 @@ const m=1000;
 type TMat=array[-1..m,-1..m]of Boolean;
 
 var n:longword;
-var a,l,r,t:TMat;
+var l,r,t:TMat;
 var i,j,k:longint;
 
 {$ifdef disp}
@@ -61,7 +61,7 @@ for j:=1 to n do
   for i:=0 to n-1 do
     begin
     l[j,i]:=not(l[j-1,i-1] xor l[j-1,i] xor l[j-1,i+1] xor l[j-2,i]);
-    l[j,i]:=l[j,i] xor a[j-1,i];
+    l[j,i]:=l[j,i];
     end;
 for i:=0 to n-1 do l[-1,i]:=False;
 l[-1,0]:=True;
@@ -251,7 +251,7 @@ for i:=0 to n-1 do
   end;
 for j:=1 to n-1 do
   for i:=0 to n-1 do
-    t[j,i]:=not(t[j-1,i-1] xor t[j-1,i] xor t[j-1,i+1] xor t[j-2,i]) xor a[j-1,i];
+    t[j,i]:=not(t[j-1,i-1] xor t[j-1,i] xor t[j-1,i+1] xor t[j-2,i]);
 end;
 procedure CalcMat3;
 type TArr=array of Boolean; TMat=array of array of Boolean;
