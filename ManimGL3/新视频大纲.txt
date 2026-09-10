@@ -1,15 +1,14 @@
 压灯法，追光法，首行枚举法：n^2
 只需要计算第一行，多项式验证更快
 总体流程（f/c/y，q/g，z/gen，x）
-什么是递推，什么是多项式（系数和向量）
+什么是递推，什么是多项式（系数和向量），Frobenius 自同态
 空间复杂度，滚动计算去除f/c/t
 f(H)=0，去除p
 去除矩阵B，H，D
-f/c的算法，lucas定理，多项式分冶
+f/c的算法，lucas定理，Fibonacci倍增，Horner法（嵌套乘法）
 AB代换分解f/c（u=t²+t)，U和H地位互换
-ApplyPoly（p(H)*v转为向量卷积），Horner法（嵌套乘法）
+y的旧公式（列出1-9），卷积全1源，Laurent多项式，多项式分冶，ApplyPoly（p(H)*v转为向量卷积）
 什么是卷积，卷积核，Toeplitz矩阵
-y的旧公式（列出1-9），卷积全1源
 Karatsuba 卷积
 gcd多项式长除法，求 Bézout 系数
 牛顿法，快速除法，half-gcd 分治（q优化）
@@ -22,6 +21,6 @@ x的优化，固定Laurent核（U核），三角Toeplitz系统，快速三角除
 Toom-Cook核（更多拆分Karatsuba核）
 FFT
 商环（F(H)=0）
-概念总结
+概念总结（概念，描述，数学表达）
 主定理时间复杂度，比较前后ab版各个阶段用时
 各阶段优化一览表（根据优化）
