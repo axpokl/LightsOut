@@ -3,7 +3,7 @@ program diandeng;
 
 {$mode objfpc}{$H+}
 
-{ H83: factor parity-structured convolution into two half-length products. }
+{ H83: recursive parity compression with a single shared workspace. }
 { Shared GF(2) formulas and coefficient blocks; B stores 32 coefficients per LongWord. }
 
 {$ifdef disp}
@@ -1178,15 +1178,21 @@ KarRecPair(a,0,b,0,c,0,r,0,s,0,lenWords,alen,blen,clen,work,0);
 end;
 
 { H83: A(t)=P(t^2), t*P(t^2), or c+(1+t)*P(t^2). }
-function KarParity(const a,b:TDynBool; var r:TDynBool; lenWords,alen,blen:longint):boolean;
-var work:TDynBool;
+{ H83 revision: recursively reuse one workspace for parity compression. }
+procedure KarParityRec(const a:TDynBool; ao:longint; const b:TDynBool; bo:longint;
+                     var r:TDynBool; ro,lenWords,alen,blen:longint;
+                     var work:TDynBool; wo:longint); forward;
+
+function KarParityStep(const a:TDynBool; ao:longint; const b:TDynBool; bo:longint;
+                     var r:TDynBool; ro,lenWords,alen,blen:longint;
+                     var work:TDynBool; wo:longint):boolean;
 var i,halfWords,halfBits,halfA,halfB,kind:longint;
 var evenOnly,oddOnly,paired,ev,od,constantBit,carry:boolean;
 begin
-KarParity:=false; evenOnly:=true; oddOnly:=true; paired:=true;
+KarParityStep:=false; evenOnly:=true; oddOnly:=true; paired:=true;
 for i:=0 to (alen+1) div 2-1 do
   begin
-  ev:=a[2*i]; od:=false; if 2*i+1<alen then od:=a[2*i+1];
+  ev:=a[ao+2*i]; od:=false; if 2*i+1<alen then od:=a[ao+2*i+1];
   if od then evenOnly:=false;
   if ev then oddOnly:=false;
   if (i>0) and (ev<>od) then paired:=false;
@@ -1196,26 +1202,45 @@ kind:=0; if not evenOnly then if oddOnly then kind:=1 else kind:=2;
 halfWords:=(lenWords+1) shr 1; halfBits:=halfWords shl 5;
 halfA:=(alen+1) shr 1; if kind<>0 then halfA:=alen shr 1;
 halfB:=(blen+1) shr 1;
-SetLength(work,halfBits*17);
+if wo<0 then begin SetLength(work,halfBits*17); wo:=0; end
+else FillChar(work[wo],halfBits*3*1,0);
 for i:=0 to halfA-1 do
-  if kind=0 then work[i]:=a[2*i] else work[i]:=a[2*i+1];
+  if kind=0 then work[wo+i]:=a[ao+2*i] else work[wo+i]:=a[ao+2*i+1];
 for i:=0 to halfB-1 do
-  begin work[halfBits+i]:=b[2*i]; if 2*i+1<blen then work[halfBits*2+i]:=b[2*i+1]; end;
-KarRecPair(work,0,work,halfBits,work,halfBits*2,work,halfBits*3,work,halfBits*5,
-           halfWords,halfA,halfB,blen shr 1,work,halfBits*7);
-SetLength(r,lenWords shl 6); carry:=false;
+  begin work[wo+halfBits+i]:=b[bo+2*i]; if 2*i+1<blen then work[wo+halfBits*2+i]:=b[bo+2*i+1]; end;
+KarParityRec(work,wo,work,wo+halfBits,work,wo+halfBits*3,
+             halfWords,halfA,halfB,work,wo+halfBits*7);
+KarParityRec(work,wo,work,wo+halfBits*2,work,wo+halfBits*5,
+             halfWords,halfA,blen shr 1,work,wo+halfBits*7);
+carry:=false;
 for i:=0 to (lenWords shl 5)-1 do
   begin
   case kind of
-    0:begin r[2*i]:=work[halfBits*3+i]; r[2*i+1]:=work[halfBits*5+i]; end;
-    1:begin r[2*i]:=carry; r[2*i+1]:=work[halfBits*3+i]; end;
-    2:begin r[2*i]:=work[halfBits*3+i] xor carry; r[2*i+1]:=work[halfBits*3+i] xor work[halfBits*5+i]; end;
+    0:begin r[ro+2*i]:=work[wo+halfBits*3+i]; r[ro+2*i+1]:=work[wo+halfBits*5+i]; end;
+    1:begin r[ro+2*i]:=carry; r[ro+2*i+1]:=work[wo+halfBits*3+i]; end;
+    2:begin r[ro+2*i]:=work[wo+halfBits*3+i] xor carry; r[ro+2*i+1]:=work[wo+halfBits*3+i] xor work[wo+halfBits*5+i]; end;
     end;
-  carry:=work[halfBits*5+i];
+  carry:=work[wo+halfBits*5+i];
   end;
-constantBit:=false; if kind=2 then constantBit:=a[0] xor a[1];
-if constantBit then for i:=0 to blen-1 do r[i]:=r[i] xor b[i];
-KarParity:=true;
+constantBit:=false; if kind=2 then constantBit:=a[ao+0] xor a[ao+1];
+if constantBit then for i:=0 to blen-1 do r[ro+i]:=r[ro+i] xor b[bo+i];
+KarParityStep:=true;
+end;
+
+procedure KarParityRec(const a:TDynBool; ao:longint; const b:TDynBool; bo:longint;
+                     var r:TDynBool; ro,lenWords,alen,blen:longint;
+                     var work:TDynBool; wo:longint);
+begin
+if lenWords>8 then if KarParityStep(a,ao,b,bo,r,ro,lenWords,alen,blen,work,wo) then exit;
+FillChar(r[ro],lenWords shl 6,0);
+KarConv(a,ao,b,bo,r,ro,lenWords,alen,blen,work,wo);
+end;
+
+function KarParity(const a,b:TDynBool; var r:TDynBool; lenWords,alen,blen:longint):boolean;
+var work:TDynBool;
+begin
+SetLength(r,lenWords shl 6);
+KarParity:=KarParityStep(a,0,b,0,r,0,lenWords,alen,blen,work,-1);
 end;
 
 type

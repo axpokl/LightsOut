@@ -2,7 +2,7 @@
 program diandeng;
 {$mode objfpc}{$H+}
 
-{ H83: factor parity-structured convolution into two half-length products. }
+{ H83: recursive parity compression with a single shared workspace. }
 { Shared GF(2) formulas and coefficient blocks; B stores 32 coefficients per LongWord. }
 
 {$ifdef disp}
@@ -1527,18 +1527,24 @@ CompactEven32:=(value or (value shr 8)) and $0000FFFF;
 end;
 
 { H83: the same parity factorization and two half-length products as A. }
-function KarParityW(const a,b:TWordArray; var r:TWordArray; lenWords,alen,blen:longint):boolean;
-var work:TWordArray;
+{ H83 revision: recursively reuse one workspace for parity compression. }
+procedure KarParityRecW(const a:TWordArray; ao:longint; const b:TWordArray; bo:longint;
+                     var r:TWordArray; ro,lenWords,alen,blen:longint;
+                     var work:TWordArray; wo:longint); forward;
+
+function KarParityStepW(const a:TWordArray; ao:longint; const b:TWordArray; bo:longint;
+                     var r:TWordArray; ro,lenWords,alen,blen:longint;
+                     var work:TWordArray; wo:longint):boolean;
 var i,halfWords,halfA,halfB,kind,aWords,bWords,shift:longint;
 var evenOnly,oddOnly,paired,constantBit:boolean;
 var value,ev,od,diff:LongWord;
 var product,carry,resultWord:QWord;
 begin
-KarParityW:=false; evenOnly:=true; oddOnly:=true; paired:=true;
+KarParityStepW:=false; evenOnly:=true; oddOnly:=true; paired:=true;
 aWords:=(alen+31) shr 5; bWords:=(blen+31) shr 5;
 for i:=0 to aWords-1 do
   begin
-  value:=a[i]; if i=aWords-1 then value:=value and (LongWord($FFFFFFFF) shr ((-alen) and 31));
+  value:=a[ao+i]; if i=aWords-1 then value:=value and (LongWord($FFFFFFFF) shr ((-alen) and 31));
   ev:=value and $55555555; od:=(value shr 1) and $55555555;
   if od<>0 then evenOnly:=false;
   if ev<>0 then oddOnly:=false;
@@ -1550,38 +1556,57 @@ kind:=0; if not evenOnly then if oddOnly then kind:=1 else kind:=2;
 halfWords:=(lenWords+1) shr 1;
 halfA:=(alen+1) shr 1; if kind<>0 then halfA:=alen shr 1;
 halfB:=(blen+1) shr 1;
-SetLength(work,halfWords*17);
+if wo<0 then begin SetLength(work,halfWords*17); wo:=0; end
+else FillChar(work[wo],halfWords*3*4,0);
 shift:=0; if kind<>0 then shift:=1;
 for i:=0 to aWords-1 do
   begin
-  value:=a[i]; if i=aWords-1 then value:=value and (LongWord($FFFFFFFF) shr ((-alen) and 31));
-  work[(i shr 1)]:=work[(i shr 1)] or (CompactEven32(value shr shift) shl ((i and 1)*16));
+  value:=a[ao+i]; if i=aWords-1 then value:=value and (LongWord($FFFFFFFF) shr ((-alen) and 31));
+  work[wo+(i shr 1)]:=work[wo+(i shr 1)] or (CompactEven32(value shr shift) shl ((i and 1)*16));
   end;
 for i:=0 to bWords-1 do
   begin
-  value:=b[i]; if i=bWords-1 then value:=value and (LongWord($FFFFFFFF) shr ((-blen) and 31));
-  work[halfWords+(i shr 1)]:=work[halfWords+(i shr 1)] or (CompactEven32(value) shl ((i and 1)*16));
-  work[halfWords*2+(i shr 1)]:=work[halfWords*2+(i shr 1)] or (CompactEven32(value shr 1) shl ((i and 1)*16));
+  value:=b[bo+i]; if i=bWords-1 then value:=value and (LongWord($FFFFFFFF) shr ((-blen) and 31));
+  work[wo+halfWords+(i shr 1)]:=work[wo+halfWords+(i shr 1)] or (CompactEven32(value) shl ((i and 1)*16));
+  work[wo+halfWords*2+(i shr 1)]:=work[wo+halfWords*2+(i shr 1)] or (CompactEven32(value shr 1) shl ((i and 1)*16));
   end;
-KarRecPairW(work,0,work,halfWords,work,halfWords*2,work,halfWords*3,work,halfWords*5,
-           halfWords,halfA,halfB,blen shr 1,work,halfWords*7);
-SetLength(r,lenWords shl 1); carry:=0;
+KarParityRecW(work,wo,work,wo+halfWords,work,wo+halfWords*3,
+             halfWords,halfA,halfB,work,wo+halfWords*7);
+KarParityRecW(work,wo,work,wo+halfWords*2,work,wo+halfWords*5,
+             halfWords,halfA,blen shr 1,work,wo+halfWords*7);
+carry:=0;
 for i:=0 to lenWords-1 do
   begin
-  product:=SpreadBits32(work[halfWords*3+i]) xor (SpreadBits32(work[halfWords*5+i]) shl 1);
+  product:=SpreadBits32(work[wo+halfWords*3+i]) xor (SpreadBits32(work[wo+halfWords*5+i]) shl 1);
   resultWord:=product;
   if kind=1 then resultWord:=(product shl 1) xor carry;
   if kind=2 then resultWord:=product xor (product shl 1) xor carry;
   carry:=product shr 63;
-  r[2*i]:=LongWord(resultWord); r[2*i+1]:=LongWord(resultWord shr 32);
+  r[ro+2*i]:=LongWord(resultWord); r[ro+2*i+1]:=LongWord(resultWord shr 32);
   end;
-constantBit:=false; if kind=2 then constantBit:=((a[0] xor (a[0] shr 1)) and 1)<>0;
+constantBit:=false; if kind=2 then constantBit:=((a[ao+0] xor (a[ao+0] shr 1)) and 1)<>0;
 if constantBit then for i:=0 to bWords-1 do
   begin
-  value:=b[i]; if i=bWords-1 then value:=value and (LongWord($FFFFFFFF) shr ((-blen) and 31));
-  r[i]:=r[i] xor value;
+  value:=b[bo+i]; if i=bWords-1 then value:=value and (LongWord($FFFFFFFF) shr ((-blen) and 31));
+  r[ro+i]:=r[ro+i] xor value;
   end;
-KarParityW:=true;
+KarParityStepW:=true;
+end;
+
+procedure KarParityRecW(const a:TWordArray; ao:longint; const b:TWordArray; bo:longint;
+                     var r:TWordArray; ro,lenWords,alen,blen:longint;
+                     var work:TWordArray; wo:longint);
+begin
+if lenWords>8 then if KarParityStepW(a,ao,b,bo,r,ro,lenWords,alen,blen,work,wo) then exit;
+FillChar(r[ro],lenWords shl 3,0);
+KarConvW(a,ao,b,bo,r,ro,lenWords,alen,blen,work,wo);
+end;
+
+function KarParityW(const a,b:TWordArray; var r:TWordArray; lenWords,alen,blen:longint):boolean;
+var work:TWordArray;
+begin
+SetLength(r,lenWords shl 1);
+KarParityW:=KarParityStepW(a,0,b,0,r,0,lenWords,alen,blen,work,-1);
 end;
 
 type
