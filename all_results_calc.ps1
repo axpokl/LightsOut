@@ -92,7 +92,7 @@ function Format-Value {
         return ''
     }
 
-    return ([double]$Value).ToString('0.00', [Globalization.CultureInfo]::InvariantCulture)
+    return ([double]$Value).ToString('0.000', [Globalization.CultureInfo]::InvariantCulture)
 }
 
 function Write-Section {

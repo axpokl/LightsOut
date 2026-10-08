@@ -2,6 +2,12 @@
 program diandeng;
 {$mode objfpc}{$H+}
 
+{ H99: preserve the common GF(2) formulas, coefficient blocks and cutoffs.
+  B expands the same fixed joint-table construction, inlines its packed
+  application, and uses byte tables for reversal and even-bit expansion.
+  Timing remains milliseconds with three decimals.
+  First-row core: O(n log^2(n) log log(n)) time, O(n) space, as in H98. }
+
 { H98: the GF(2) algorithm and cutoffs are unchanged. A remains Boolean.
   B locates a 64-bit head degree directly, splits reflected-word boundaries
   outside the Fibonacci loops, reads the retained output half directly,
@@ -238,13 +244,27 @@ for k2:=0 to hiw+1 do if k2<=mw then a[k2]:=b[k2];
 if hiw+2<=mw then a[hiw+2]:=0;
 end;
 
+{ H99: the same bit permutation, eight coefficients per table lookup. }
+const reverseByte:array[0..255] of byte=(
+0,128,64,192,32,160,96,224,16,144,80,208,48,176,112,240,
+8,136,72,200,40,168,104,232,24,152,88,216,56,184,120,248,
+4,132,68,196,36,164,100,228,20,148,84,212,52,180,116,244,
+12,140,76,204,44,172,108,236,28,156,92,220,60,188,124,252,
+2,130,66,194,34,162,98,226,18,146,82,210,50,178,114,242,
+10,138,74,202,42,170,106,234,26,154,90,218,58,186,122,250,
+6,134,70,198,38,166,102,230,22,150,86,214,54,182,118,246,
+14,142,78,206,46,174,110,238,30,158,94,222,62,190,126,254,
+1,129,65,193,33,161,97,225,17,145,81,209,49,177,113,241,
+9,137,73,201,41,169,105,233,25,153,89,217,57,185,121,249,
+5,133,69,197,37,165,101,229,21,149,85,213,53,181,117,245,
+13,141,77,205,45,173,109,237,29,157,93,221,61,189,125,253,
+3,131,67,195,35,163,99,227,19,147,83,211,51,179,115,243,
+11,139,75,203,43,171,107,235,27,155,91,219,59,187,123,251,
+7,135,71,199,39,167,103,231,23,151,87,215,55,183,119,247,
+15,143,79,207,47,175,111,239,31,159,95,223,63,191,127,255);
 function ReverseWord32(x:LongWord):LongWord; inline;
 begin
-x:=((x and $55555555) shl 1) or ((x shr 1) and $55555555);
-x:=((x and $33333333) shl 2) or ((x shr 2) and $33333333);
-x:=((x and $0F0F0F0F) shl 4) or ((x shr 4) and $0F0F0F0F);
-x:=((x and $00FF00FF) shl 8) or ((x shr 8) and $00FF00FF);
-ReverseWord32:=(x shl 16) or (x shr 16);
+ReverseWord32:=(LongWord(reverseByte[(x shr 0) and $FF]) shl 24) or (LongWord(reverseByte[(x shr 8) and $FF]) shl 16) or (LongWord(reverseByte[(x shr 16) and $FF]) shl 8) or (LongWord(reverseByte[(x shr 24) and $FF]) shl 0);
 end;
 
 function ReadVec32Any(const a:TVec; bit0:longint):LongWord;
@@ -320,16 +340,27 @@ a[hiw]:=a[hiw] and DegMask(deg);
 if hiw+1<=mw then a[hiw+1]:=0;
 end;
 
+{ H99: coefficient i goes to coefficient 2*i, in eight-bit groups. }
+const spreadByte:array[0..255] of word=(
+0,1,4,5,16,17,20,21,64,65,68,69,80,81,84,85,
+256,257,260,261,272,273,276,277,320,321,324,325,336,337,340,341,
+1024,1025,1028,1029,1040,1041,1044,1045,1088,1089,1092,1093,1104,1105,1108,1109,
+1280,1281,1284,1285,1296,1297,1300,1301,1344,1345,1348,1349,1360,1361,1364,1365,
+4096,4097,4100,4101,4112,4113,4116,4117,4160,4161,4164,4165,4176,4177,4180,4181,
+4352,4353,4356,4357,4368,4369,4372,4373,4416,4417,4420,4421,4432,4433,4436,4437,
+5120,5121,5124,5125,5136,5137,5140,5141,5184,5185,5188,5189,5200,5201,5204,5205,
+5376,5377,5380,5381,5392,5393,5396,5397,5440,5441,5444,5445,5456,5457,5460,5461,
+16384,16385,16388,16389,16400,16401,16404,16405,16448,16449,16452,16453,16464,16465,16468,16469,
+16640,16641,16644,16645,16656,16657,16660,16661,16704,16705,16708,16709,16720,16721,16724,16725,
+17408,17409,17412,17413,17424,17425,17428,17429,17472,17473,17476,17477,17488,17489,17492,17493,
+17664,17665,17668,17669,17680,17681,17684,17685,17728,17729,17732,17733,17744,17745,17748,17749,
+20480,20481,20484,20485,20496,20497,20500,20501,20544,20545,20548,20549,20560,20561,20564,20565,
+20736,20737,20740,20741,20752,20753,20756,20757,20800,20801,20804,20805,20816,20817,20820,20821,
+21504,21505,21508,21509,21520,21521,21524,21525,21568,21569,21572,21573,21584,21585,21588,21589,
+21760,21761,21764,21765,21776,21777,21780,21781,21824,21825,21828,21829,21840,21841,21844,21845);
 function SpreadBits32(x:LongWord):QWord; inline;
-var z0:QWord;
 begin
-z0:=x;
-z0:=(z0 or (z0 shl 16)) and QWord($0000FFFF0000FFFF);
-z0:=(z0 or (z0 shl 8)) and QWord($00FF00FF00FF00FF);
-z0:=(z0 or (z0 shl 4)) and QWord($0F0F0F0F0F0F0F0F);
-z0:=(z0 or (z0 shl 2)) and QWord($3333333333333333);
-z0:=(z0 or (z0 shl 1)) and QWord($5555555555555555);
-SpreadBits32:=z0;
+SpreadBits32:=(QWord(spreadByte[(x shr 0) and $FF]) shl 0) or (QWord(spreadByte[(x shr 8) and $FF]) shl 16) or (QWord(spreadByte[(x shr 16) and $FF]) shl 32) or (QWord(spreadByte[(x shr 24) and $FF]) shl 48);
 end;
 
 procedure PutFCDouble(var a:TWordArray; pos:longint; v:QWord); inline;
@@ -2622,7 +2653,7 @@ function BlockStep64:boolean;
 var a0,a1,at:QWord; m00,m01,m10,m11,mt:LongWord;
 var lo,e0,e1,sh,tmp:longint;
 var tx,ty:array[0..63] of QWord;
-var jx,jy:QWord; bit,power,index,i:longint;
+var jx,jy:QWord;
 function Head(const x:TL):QWord; inline;
 var ws,bs:longint;
 begin
@@ -2631,7 +2662,7 @@ Head:=(QWord(x[ws]) or (QWord(x[ws+1]) shl 32)) shr bs;
 if bs<>0 then Head:=Head or (QWord(x[ws+2]) shl (64-bs));
 end;
 { H91: cache each LongWord input while applying the same 3+3 joint table. }
-procedure ApplyPair32(var x,y:TL; var dx,dy:longint);
+procedure ApplyPair32(var x,y:TL; var dx,dy:longint); inline;
 var i,lim:longint; index:array[0..10] of longint;
 var xx,yy:QWord; cx,cy,vx,vy:LongWord;
 begin
@@ -2676,17 +2707,77 @@ while e1>=32 do
   at:=a0; a0:=a1; a1:=at; tmp:=e0; e0:=e1; e1:=tmp;
   mt:=m00; m00:=m10; m10:=mt; mt:=m01; m01:=m11; m11:=mt;
   end;
-tx[0]:=Default(QWord); ty[0]:=tx[0];
-power:=1;
-for i:=0 to 5 do
-  begin
-  bit:=i mod 3;
-  if i<3 then begin jx:=QWord(m00) shl bit; jy:=QWord(m10) shl bit; end
-  else begin jx:=QWord(m01) shl bit; jy:=QWord(m11) shl bit; end;
-  for index:=0 to power-1 do
-    begin tx[index+power]:=tx[index] xor jx; ty[index+power]:=ty[index] xor jy; end;
-  power:=power shl 1;
-  end;
+{ H99: the same six binary table extensions, with fixed indices. }
+tx[0]:=0; ty[0]:=0;
+jx:=QWord(m00) shl 0; jy:=QWord(m10) shl 0;
+tx[1]:=tx[0] xor jx; ty[1]:=ty[0] xor jy;
+jx:=QWord(m00) shl 1; jy:=QWord(m10) shl 1;
+tx[2]:=tx[0] xor jx; ty[2]:=ty[0] xor jy;
+tx[3]:=tx[1] xor jx; ty[3]:=ty[1] xor jy;
+jx:=QWord(m00) shl 2; jy:=QWord(m10) shl 2;
+tx[4]:=tx[0] xor jx; ty[4]:=ty[0] xor jy;
+tx[5]:=tx[1] xor jx; ty[5]:=ty[1] xor jy;
+tx[6]:=tx[2] xor jx; ty[6]:=ty[2] xor jy;
+tx[7]:=tx[3] xor jx; ty[7]:=ty[3] xor jy;
+jx:=QWord(m01) shl 0; jy:=QWord(m11) shl 0;
+tx[8]:=tx[0] xor jx; ty[8]:=ty[0] xor jy;
+tx[9]:=tx[1] xor jx; ty[9]:=ty[1] xor jy;
+tx[10]:=tx[2] xor jx; ty[10]:=ty[2] xor jy;
+tx[11]:=tx[3] xor jx; ty[11]:=ty[3] xor jy;
+tx[12]:=tx[4] xor jx; ty[12]:=ty[4] xor jy;
+tx[13]:=tx[5] xor jx; ty[13]:=ty[5] xor jy;
+tx[14]:=tx[6] xor jx; ty[14]:=ty[6] xor jy;
+tx[15]:=tx[7] xor jx; ty[15]:=ty[7] xor jy;
+jx:=QWord(m01) shl 1; jy:=QWord(m11) shl 1;
+tx[16]:=tx[0] xor jx; ty[16]:=ty[0] xor jy;
+tx[17]:=tx[1] xor jx; ty[17]:=ty[1] xor jy;
+tx[18]:=tx[2] xor jx; ty[18]:=ty[2] xor jy;
+tx[19]:=tx[3] xor jx; ty[19]:=ty[3] xor jy;
+tx[20]:=tx[4] xor jx; ty[20]:=ty[4] xor jy;
+tx[21]:=tx[5] xor jx; ty[21]:=ty[5] xor jy;
+tx[22]:=tx[6] xor jx; ty[22]:=ty[6] xor jy;
+tx[23]:=tx[7] xor jx; ty[23]:=ty[7] xor jy;
+tx[24]:=tx[8] xor jx; ty[24]:=ty[8] xor jy;
+tx[25]:=tx[9] xor jx; ty[25]:=ty[9] xor jy;
+tx[26]:=tx[10] xor jx; ty[26]:=ty[10] xor jy;
+tx[27]:=tx[11] xor jx; ty[27]:=ty[11] xor jy;
+tx[28]:=tx[12] xor jx; ty[28]:=ty[12] xor jy;
+tx[29]:=tx[13] xor jx; ty[29]:=ty[13] xor jy;
+tx[30]:=tx[14] xor jx; ty[30]:=ty[14] xor jy;
+tx[31]:=tx[15] xor jx; ty[31]:=ty[15] xor jy;
+jx:=QWord(m01) shl 2; jy:=QWord(m11) shl 2;
+tx[32]:=tx[0] xor jx; ty[32]:=ty[0] xor jy;
+tx[33]:=tx[1] xor jx; ty[33]:=ty[1] xor jy;
+tx[34]:=tx[2] xor jx; ty[34]:=ty[2] xor jy;
+tx[35]:=tx[3] xor jx; ty[35]:=ty[3] xor jy;
+tx[36]:=tx[4] xor jx; ty[36]:=ty[4] xor jy;
+tx[37]:=tx[5] xor jx; ty[37]:=ty[5] xor jy;
+tx[38]:=tx[6] xor jx; ty[38]:=ty[6] xor jy;
+tx[39]:=tx[7] xor jx; ty[39]:=ty[7] xor jy;
+tx[40]:=tx[8] xor jx; ty[40]:=ty[8] xor jy;
+tx[41]:=tx[9] xor jx; ty[41]:=ty[9] xor jy;
+tx[42]:=tx[10] xor jx; ty[42]:=ty[10] xor jy;
+tx[43]:=tx[11] xor jx; ty[43]:=ty[11] xor jy;
+tx[44]:=tx[12] xor jx; ty[44]:=ty[12] xor jy;
+tx[45]:=tx[13] xor jx; ty[45]:=ty[13] xor jy;
+tx[46]:=tx[14] xor jx; ty[46]:=ty[14] xor jy;
+tx[47]:=tx[15] xor jx; ty[47]:=ty[15] xor jy;
+tx[48]:=tx[16] xor jx; ty[48]:=ty[16] xor jy;
+tx[49]:=tx[17] xor jx; ty[49]:=ty[17] xor jy;
+tx[50]:=tx[18] xor jx; ty[50]:=ty[18] xor jy;
+tx[51]:=tx[19] xor jx; ty[51]:=ty[19] xor jy;
+tx[52]:=tx[20] xor jx; ty[52]:=ty[20] xor jy;
+tx[53]:=tx[21] xor jx; ty[53]:=ty[21] xor jy;
+tx[54]:=tx[22] xor jx; ty[54]:=ty[22] xor jy;
+tx[55]:=tx[23] xor jx; ty[55]:=ty[23] xor jy;
+tx[56]:=tx[24] xor jx; ty[56]:=ty[24] xor jy;
+tx[57]:=tx[25] xor jx; ty[57]:=ty[25] xor jy;
+tx[58]:=tx[26] xor jx; ty[58]:=ty[26] xor jy;
+tx[59]:=tx[27] xor jx; ty[59]:=ty[27] xor jy;
+tx[60]:=tx[28] xor jx; ty[60]:=ty[28] xor jy;
+tx[61]:=tx[29] xor jx; ty[61]:=ty[29] xor jy;
+tx[62]:=tx[30] xor jx; ty[62]:=ty[30] xor jy;
+tx[63]:=tx[31] xor jx; ty[63]:=ty[31] xor jy;
 ApplyPair32(r0^,r1^,d0,d1); ApplyPair32(u0^,u1^,du0,du1); ApplyPair32(v0^,v1^,dv0,dv1);
 BlockStep64:=true;
 end;
@@ -2817,7 +2908,7 @@ HPWFromVec(va,hi,a); HPWFromVec(vb,hi,b); HPWXGCD(a,b,g,u,v);
 HPWToVec(g,vg,hi); HPWToVec(u,vu,hi); HPWToVec(v,vv,hi); GcdU:=g.d;
 end;
 
-function LowMask32(bits:longint):LongWord;
+function LowMask32(bits:longint):LongWord; inline;
 begin
 if bits<=0 then LowMask32:=0
 else if bits>=32 then LowMask32:=$FFFFFFFF
@@ -2826,11 +2917,7 @@ end;
 
 function Reverse32(x:LongWord):LongWord; inline;
 begin
-x:=((x and $55555555) shl 1) or ((x shr 1) and $55555555);
-x:=((x and $33333333) shl 2) or ((x shr 2) and $33333333);
-x:=((x and $0F0F0F0F) shl 4) or ((x shr 4) and $0F0F0F0F);
-x:=((x and $00FF00FF) shl 8) or ((x shr 8) and $00FF00FF);
-Reverse32:=(x shl 16) or (x shr 16);
+Reverse32:=(LongWord(reverseByte[(x shr 0) and $FF]) shl 24) or (LongWord(reverseByte[(x shr 8) and $FF]) shl 16) or (LongWord(reverseByte[(x shr 16) and $FF]) shl 8) or (LongWord(reverseByte[(x shr 24) and $FF]) shl 0);
 end;
 
 procedure ClearDynBits(var a:TWordArray; bit0,len:longint);
