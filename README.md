@@ -756,13 +756,13 @@ https://zh.wikipedia.org/wiki/邻接矩阵
 [24] 维基百科，《常对角矩阵》  
 https://zh.wikipedia.org/wiki/常对角矩阵
 
-[25] Joachim von zur Gathen、Jürgen Gerhard，《Modern Computer Algebra》  
-https://www.cambridge.org/core/books/modern-computer-algebra/DB3563D4013401734851CF683D2F03F0
+[25] Joachim von zur Gathen、Jürgen Gerhard，《现代计算机代数》  
+https://cosec.bit.uni-bonn.de/fileadmin/user_upload/science/mca/mcaintro.pdf
 
-[26] OpenAI，《The logarithmic exponent of finite Fourier transforms》（2026-11-24）  
+[26] OpenAI，《有限傅里叶变换的对数指数》（2026-11-24）  
 https://github.com/openai/math/blob/main/preprints/The-logarithmic-exponent-of-finite-Fourier-transforms-November-24-2026/paper.pdf
 
-[27] OpenAI，《The logarithmic exponent of integer multiplication on tapes》（2026-11-24）  
+[27] OpenAI，《磁带模型上整数乘法的对数指数》（2026-11-24）  
 https://github.com/openai/math/blob/main/preprints/The-logarithmic-exponent-of-integer-multiplication-on-tapes-November-24-2026/paper.pdf
 
 [28] OpenAI，数学研究手稿集合与验证说明  
@@ -1529,7 +1529,7 @@ https://en.wikipedia.org/wiki/Adjacency_matrix
 https://en.wikipedia.org/wiki/Toeplitz_matrix
 
 [25] Joachim von zur Gathen, Jürgen Gerhard, “Modern Computer Algebra”  
-https://www.cambridge.org/core/books/modern-computer-algebra/DB3563D4013401734851CF683D2F03F0
+https://cosec.bit.uni-bonn.de/fileadmin/user_upload/science/mca/mcaintro.pdf
 
 [26] OpenAI, “The logarithmic exponent of finite Fourier transforms” (2026-11-24)  
 https://github.com/openai/math/blob/main/preprints/The-logarithmic-exponent-of-finite-Fourier-transforms-November-24-2026/paper.pdf
