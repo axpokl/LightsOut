@@ -1,22 +1,9 @@
-{ H115: share one outer-size lookup plan across the complete Cantor
-  basis conversion. Each table row applies the exact Pascal map
-  b[j]=XOR(a[i], (i and j)=j), not an approximation or cached solution.
-  A stores table and arithmetic bits as Boolean; B packs the same map.
-  Both use identical groups, guards, formulas and solver dispatch.
-  With N=2^k field coefficients, choose b=floor(log2(k)) axes per group.
-  One table has 2^(2^b)<=N rows. Gathering and scattering w Boolean
-  coordinates costs O(w*N) per group; setup costs O(N*k) and is cached.
-  The FULL conversion costs O(w*N*k), including all recursive Taylor
-  levels, instead of O(w*N*k*log(k)) for the stage-by-stage network.
-  This uses unit-cost O(log(N))-bit lookup addresses; it is not a new
-  unbounded bit-complexity multiplication theorem. This implementation
-  has w=32 and bounded transform dimensions. Half-GCD still contributes
-  its logarithm. No O(M(n)) general GCD or square-root-log FFT is claimed.
-  Laurent/Chebyshev reflection conversion also groups whole residue
-  orbits, including its boundary orbit, into exact forward/inverse maps.
-  Its local lookup-RAM bound is O(n*log(n)/log(log(n))).
-  Small groups retain the common XOR network. GeneMat is unchanged;
-  no compiler optimization switch or directive is added. }
+{ Performance repair: H115/H116 table-driven reflection and seven-product
+  trials are withdrawn. These versions use the same H114 solver kernel,
+  with strict Boolean A / packed B formulas and unchanged validation.
+  g stays at validation ENTRY; its elapsed time is appended after gen
+  in the SAME g field. No e label, no cross-row or shifted x/gen time.
+  Existing compilation fixes, backend comparison modes and CRLF remain. }
 { H114: share additive-FFT forward images in paired products; fuse
   matrix products in the frequency domain before inverse conversion.
   H113 residue-class Taylor/Pascal conversion is retained. Restore exact
@@ -416,6 +403,17 @@ begin
   lastCounter:=c;
   TimeMark:=ms;
   write(ms:8:3,#9,ch);
+end;
+
+{ g is a START label, like m/q/z/x. Complete its numeric field on the
+  SAME line after ALL validation work. There is no separate e column. }
+procedure FinishGenTiming;
+var counter:Int64; ms:Double;
+begin
+QueryPerformanceCounter(counter);
+ms:=(counter-lastCounter)*1000.0/perfFreq;
+lastCounter:=counter;
+write(ms:8:3,#9);
 end;
 
 
@@ -1360,84 +1358,20 @@ end;
   novel basis. Split the dimension at its largest lower power of two,
   where s_h(X)=X^(2^h)+X; this accepts EVERY transform dimension. }
 { H114: the same grouped linear Pascal network in A/B. }
-type TH115PascalRow=Word;
-var h115PascalTable:array of TH115PascalRow;
-var h115PascalOffset:array[0..4]of longint;
-var h115PascalBuilt:longint=3;
-var h115PascalGroup:longint=1;
-
-{ Every recursive slice reuses the OUTER plan. Replanning from a short
-  slice would lose the logarithmic saving. Integers below are addresses. }
-procedure H115PreparePascal(dim:longint);
-var groupDim,width,rows,start,value,previous,bitIndex,j:longint; column:Word;
-begin
-h115PascalGroup:=1;
-while (1 shl (h115PascalGroup+1))<=dim do inc(h115PascalGroup);
-{ Signed array indices limit dim to 30, hence at most four axes. }
-if h115PascalGroup>4 then Halt(233);
-if h115PascalGroup<=h115PascalBuilt then exit;
-for groupDim:=h115PascalBuilt+1 to h115PascalGroup do
-  begin
-  width:=1 shl groupDim; rows:=1 shl width;
-  start:=Length(h115PascalTable); h115PascalOffset[groupDim]:=start;
-  SetLength(h115PascalTable,start+rows);
-  h115PascalTable[start]:=0;
-  for value:=1 to rows-1 do
-    begin
-    bitIndex:=0; previous:=value;
-    while (previous and 1)=0 do begin previous:=previous shr 1; inc(bitIndex); end;
-    previous:=value xor (1 shl bitIndex);
-    column:=0;
-    for j:=0 to width-1 do if (j and bitIndex)=j then column:=column or (Word(1) shl j);
-    h115PascalTable[start+value]:=h115PascalTable[start+previous] xor column;
-    end;
-  end;
-h115PascalBuilt:=h115PascalGroup;
-end;
-
 procedure H113Pascal(var a:TH111Array; dim:longint);
-var pass,groupDim,width,step,half,base,offset,j,k,index,p,count,start,stage:longint; planeMask:LongWord;
+var pass,groupDim,stage,half,base,j,count:longint;
 begin
 count:=1 shl dim; pass:=0;
 while pass<dim do
   begin
-  groupDim:=dim-pass; if groupDim>h115PascalGroup then groupDim:=h115PascalGroup;
-  if groupDim<=3 then
+  groupDim:=dim-pass; if groupDim>3 then groupDim:=3;
+  for stage:=0 to groupDim-1 do
     begin
-    for stage:=0 to groupDim-1 do
-      begin
-      half:=1 shl (pass+stage); base:=0;
-      while base<count do
-        begin
-        for j:=base to base+half-1 do a[j]:=a[j] xor a[j+half];
-        inc(base,half*2);
-        end;
-      end;
-    end
-  else
-    begin
-    width:=1 shl groupDim; step:=1 shl pass;
-    start:=h115PascalOffset[groupDim]; base:=0;
+    half:=1 shl (pass+stage); base:=0;
     while base<count do
       begin
-      for offset:=0 to step-1 do for k:=0 to 31 do
-        begin
-        planeMask:=LongWord(1) shl k;
-        index:=0; p:=base+offset;
-        for j:=0 to width-1 do
-          begin if (a[p] and planeMask)<>0 then index:=index or (1 shl j); inc(p,step); end;
-        if index<>0 then
-          begin
-          p:=base+offset;
-          for j:=0 to width-1 do
-            begin
-            if (h115PascalTable[start+index] and (Word(1) shl j))<>0 then
-            a[p]:=a[p] or planeMask else a[p]:=a[p] and not planeMask;
-            inc(p,step);
-            end;
-          end;
-        end;
-      inc(base,width*step);
+      for j:=base to base+half-1 do a[j]:=a[j] xor a[j+half];
+      inc(base,half*2);
       end;
     end;
   inc(pass,groupDim);
@@ -1503,22 +1437,16 @@ for d:=0 to period-1 do
   end;
 end;
 
-procedure H115ConvertCore(var a:TH111Array; base,stride,dim:longint; inverse:boolean);
+procedure H111Convert(var a:TH111Array; base,stride,dim:longint; inverse:boolean);
 var h,g,lowCount,highCount,p:longint;
 begin
 if dim<=1 then exit;
 h:=1; while h*2<dim do h:=h*2;
 g:=dim-h; lowCount:=1 shl h; highCount:=1 shl g;
 if inverse then H111Taylor(a,base,stride,dim,h,true);
-for p:=0 to highCount-1 do H115ConvertCore(a,base+p*lowCount*stride,stride,h,inverse);
-for p:=0 to lowCount-1 do H115ConvertCore(a,base+p*stride,stride*lowCount,g,inverse);
+for p:=0 to highCount-1 do H111Convert(a,base+p*lowCount*stride,stride,h,inverse);
+for p:=0 to lowCount-1 do H111Convert(a,base+p*stride,stride*lowCount,g,inverse);
 if not inverse then H111Taylor(a,base,stride,dim,h,false);
-end;
-
-procedure H111Convert(var a:TH111Array; base,stride,dim:longint; inverse:boolean);
-begin
-H115PreparePascal(dim);
-H115ConvertCore(a,base,stride,dim,inverse);
 end;
 
 procedure H111Transform(var a:TH111Array; dim:longint; inverse:boolean);
@@ -4477,7 +4405,7 @@ else
 ConvertH32:=v;
 end;
 
-procedure H115OriginalConvertHW(var a:TWordArray; first,count:longint; inverse:boolean);
+procedure ConvertHW(var a:TWordArray; first,count:longint; inverse:boolean);
 var h,g,j,w,base:longint; v:LongWord;
 begin
 if count=32 then
@@ -4486,7 +4414,7 @@ h:=32; while (h shl 1)<count do h:=h shl 1;
 g:=count-h;
 if not inverse then
   begin
-  H115OriginalConvertHW(a,first,h,false); H115OriginalConvertHW(a,first+h,g,false);
+  ConvertHW(a,first,h,false); ConvertHW(a,first+h,g,false);
   end;
 base:=(first+h) shr 5;
 for j:=0 to (g shr 5)-1 do
@@ -4497,114 +4425,7 @@ for j:=0 to (g shr 5)-1 do
   end;
 if inverse then
   begin
-  H115OriginalConvertHW(a,first,h,true); H115OriginalConvertHW(a,first+h,g,true);
-  end;
-end;
-
-{ The reflection i -> 2*h-i preserves residues modulo h up to sign.
-  For 0<r<h its orbit is r,2*h-r,2*h+r,4*h-r,... . A group of b
-  stages is therefore ONE fixed linear map on 2^b bits. The r=0
-  boundary orbit has its own map; inverse maps reverse the stages.
-  Choose 2^b<=ceil(log2(count))/2: all four tables take O(count)
-  space and setup, and the complete conversion takes
-  O(count*log(count)/log(log(count))) bit/address operations in the
-  lookup-RAM model. This is a LOCAL conversion improvement, not a
-  lower general half-GCD bound. Arbitrary 32-aligned lengths and
-  partial final orbits retain exactly the original zero extension. }
-var h115OrbitTable:array[0..3]of array of TH115PascalRow;
-var h115OrbitOffset:array[0..4]of longint;
-var h115OrbitBuilt:longint=0;
-
-procedure H115PrepareOrbits(groupDim:longint);
-var axes,width,rows,start,kind,k,j,pass,stage,half,base,value,previous,bitIndex:longint;
-var column:array[0..15]of TH115PascalRow;
-begin
-for axes:=h115OrbitBuilt+1 to groupDim do
-  begin
-  width:=1 shl axes; rows:=1 shl width;
-  start:=Length(h115OrbitTable[0]); h115OrbitOffset[axes]:=start;
-  for kind:=0 to 3 do
-    begin
-    for k:=0 to width-1 do column[k]:=Word(1) shl k;
-    for pass:=0 to axes-1 do
-      begin
-      if (kind and 1)<>0 then stage:=axes-1-pass else stage:=pass;
-      half:=1 shl stage; base:=0;
-      while base<width do
-        begin
-        if kind>=2 then
-          begin
-          for j:=1 to half-1 do for k:=0 to width-1 do if (column[k] and (Word(1) shl (base+half+j)))<>0 then
-            column[k]:=column[k] xor (Word(1) shl (base+half-j));
-          end
-        else
-          begin
-          for j:=0 to half-1 do for k:=0 to width-1 do if (column[k] and (Word(1) shl (base+(j xor (half*2-1)))))<>0 then
-            column[k]:=column[k] xor (Word(1) shl (base+j));
-          end;
-        inc(base,half*2);
-        end;
-      end;
-    SetLength(h115OrbitTable[kind],start+rows);
-    h115OrbitTable[kind][start]:=0;
-    for value:=1 to rows-1 do
-      begin
-      previous:=value; bitIndex:=0;
-      while (previous and 1)=0 do begin previous:=previous shr 1; inc(bitIndex); end;
-      previous:=value xor (1 shl bitIndex);
-      h115OrbitTable[kind][start+value]:=h115OrbitTable[kind][start+previous] xor column[bitIndex];
-      end;
-    end;
-  end;
-if groupDim>h115OrbitBuilt then h115OrbitBuilt:=groupDim;
-end;
-
-procedure ConvertHW(var a:TWordArray; first,count:longint; inverse:boolean);
-var dim,t,groupDim,axes,h,width,blockLength,base,r,j,p,index,kind,start,levels,pass,level:longint;
-var savedH,savedAxes:array[0..30]of longint;
-begin
-if count<=256 then begin H115OriginalConvertHW(a,first,count,inverse); exit; end;
-if count>High(longint) div 2 then Halt(233);
-dim:=0; t:=count-1; while t>0 do begin t:=t shr 1; inc(dim); end;
-groupDim:=1; while (1 shl (groupDim+1))<=dim div 2 do inc(groupDim);
-H115PrepareOrbits(groupDim);
-h:=1; levels:=0;
-while h<count do
-  begin
-  axes:=1; while (axes<groupDim) and ((h shl axes)<count) do inc(axes);
-  savedH[levels]:=h; savedAxes[levels]:=axes; inc(levels); h:=h shl axes;
-  end;
-for pass:=0 to levels-1 do
-  begin
-  if inverse then level:=levels-1-pass else level:=pass;
-  h:=savedH[level]; axes:=savedAxes[level]; width:=1 shl axes;
-  blockLength:=h*width; start:=h115OrbitOffset[axes]; base:=0;
-  while base<count do
-    begin
-    for r:=0 to h-1 do if base+r<count then
-      begin
-      kind:=ord(inverse); if r=0 then inc(kind,2);
-      index:=0;
-      for j:=0 to width-1 do
-        begin
-        if r=0 then p:=base+j*h
-        else if (j and 1)=0 then p:=base+j*h+r else p:=base+(j+1)*h-r;
-        if p<count then if ((a[(first+p) shr 5] shr ((first+p) and 31)) and 1)<>0 then index:=index or (1 shl j);
-        end;
-      if index<>0 then for j:=0 to width-1 do
-        begin
-        if r=0 then p:=base+j*h
-        else if (j and 1)=0 then p:=base+j*h+r else p:=base+(j+1)*h-r;
-        if p<count then
-          begin
-          if (h115OrbitTable[kind][start+index] and (Word(1) shl j))<>0 then
-          a[(first+p) shr 5]:=a[(first+p) shr 5] or (LongWord(1) shl ((first+p) and 31))
-        else a[(first+p) shr 5]:=a[(first+p) shr 5] and not (LongWord(1) shl ((first+p) and 31));
-          end;
-        end;
-      end;
-    inc(base,blockLength);
-    end;
+  ConvertHW(a,first,h,true); ConvertHW(a,first+h,g,true);
   end;
 end;
 
@@ -5966,8 +5787,8 @@ var mask0:LongWord;
 var k2:longint;
 begin
 TimeMark('g');
-if h108Ready then begin GeneMat:=H108Check; write(GeneMat); exit; end;
-if h107Ready then begin GeneMat:=H107Check; write(GeneMat); exit; end;
+if h108Ready then begin GeneMat:=H108Check; FinishGenTiming; write(GeneMat); exit; end;
+if h107Ready then begin GeneMat:=H107Check; FinishGenTiming; write(GeneMat); exit; end;
 if H103Dyadic then H103InverseJ(x,t)
 else
 ApplyFastUComboW(f,c,x,t,n-1,longint(n div 2),2);
@@ -5976,7 +5797,7 @@ if (longint(n) and 31)=0 then mask0:=$FFFFFFFF else mask0:=(LongWord(1) shl (lon
 GeneMat:=true;
 for k2:=0 to wn0-2 do GeneMat:=GeneMat and (t[k2]=y[k2]);
 GeneMat:=GeneMat and (((t[wn0-1] xor y[wn0-1]) and mask0)=0);
-write(GeneMat);
+FinishGenTiming; write(GeneMat);
 end;
 
 begin
@@ -6005,7 +5826,7 @@ for n:=9900 to 10000 do
   write(n,#9);
   MakeMat();
   CalcMat2();
-  GeneMat();TimeMark('e');{$ifdef disp}write('%');SaveMat('_T2');{$endif}
+  GeneMat();{$ifdef disp}write('%');SaveMat('_T2');{$endif}
   {$ifdef disp}if not(iswin()) then halt;{$endif}
   writeln();
   end;

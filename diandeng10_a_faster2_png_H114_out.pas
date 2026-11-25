@@ -1,3 +1,9 @@
+{ Performance repair: H115/H116 table-driven reflection and seven-product
+  trials are withdrawn. These versions use the same H114 solver kernel,
+  with strict Boolean A / packed B formulas and unchanged validation.
+  g stays at validation ENTRY; its elapsed time is appended after gen
+  in the SAME g field. No e label, no cross-row or shifted x/gen time.
+  Existing compilation fixes, backend comparison modes and CRLF remain. }
 { H114: share additive-FFT forward images in paired products; fuse
   matrix products in the frequency domain before inverse conversion.
   H113 residue-class Taylor/Pascal conversion is retained. Restore exact

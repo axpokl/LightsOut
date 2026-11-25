@@ -6,7 +6,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $number = '[0-9]+(?:\.[0-9]+)?'
-$rowPattern = "^\s*\d+\s+($number)\s+m\s+($number)\s+c\s+($number)\s+q\s+($number)\s+z\s+($number)\s+d\s+$number(?:\s+x\s+($number))?\s+g(?:TRUE|FALSE)"
+$rowPattern = "^\s*\d+\s+($number)\s+m\s+($number)\s+c\s+($number)\s+q\s+($number)\s+z\s+($number)\s+d\s+$number(?:\s+x\s+($number))?\s+g(?:\s+($number))?\s*(?:TRUE|FALSE)\s*$"
 
 function Get-Median {
     param([double[]]$Values)
@@ -31,6 +31,7 @@ function New-Block {
         X = [System.Collections.Generic.List[double]]::new()
         Gen = [System.Collections.Generic.List[double]]::new()
         RowCount = 0
+        GenPending = $false
     }
 }
 
@@ -62,15 +63,28 @@ function Read-ResultFile {
             continue
         }
 
-        if ($null -eq $current -or $line -notmatch $rowPattern) {
+        if ($null -eq $current) {
+            continue
+        }
+        if ($line -notmatch $rowPattern) {
+            if ($line -match '^\s*\d+\s+[0-9]') {
+                throw "Unrecognized result row in $Path ($($current.Version)): $line"
+            }
             continue
         }
 
         if ($current.RowCount -eq 0) {
             $current.Mak = [double]$Matches[2]
         }
-        else {
+        if ($current.GenPending) {
             $current.Gen.Add([double]$Matches[1])
+        }
+        if (-not [string]::IsNullOrEmpty($Matches[7])) {
+            $current.Gen.Add([double]$Matches[7])
+            $current.GenPending = $false
+        }
+        else {
+            $current.GenPending = $true
         }
 
         $current.Q.Add([double]$Matches[4])

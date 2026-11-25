@@ -1,22 +1,9 @@
-{ H115: share one outer-size lookup plan across the complete Cantor
-  basis conversion. Each table row applies the exact Pascal map
-  b[j]=XOR(a[i], (i and j)=j), not an approximation or cached solution.
-  A stores table and arithmetic bits as Boolean; B packs the same map.
-  Both use identical groups, guards, formulas and solver dispatch.
-  With N=2^k field coefficients, choose b=floor(log2(k)) axes per group.
-  One table has 2^(2^b)<=N rows. Gathering and scattering w Boolean
-  coordinates costs O(w*N) per group; setup costs O(N*k) and is cached.
-  The FULL conversion costs O(w*N*k), including all recursive Taylor
-  levels, instead of O(w*N*k*log(k)) for the stage-by-stage network.
-  This uses unit-cost O(log(N))-bit lookup addresses; it is not a new
-  unbounded bit-complexity multiplication theorem. This implementation
-  has w=32 and bounded transform dimensions. Half-GCD still contributes
-  its logarithm. No O(M(n)) general GCD or square-root-log FFT is claimed.
-  Laurent/Chebyshev reflection conversion also groups whole residue
-  orbits, including its boundary orbit, into exact forward/inverse maps.
-  Its local lookup-RAM bound is O(n*log(n)/log(log(n))).
-  Small groups retain the common XOR network. GeneMat is unchanged;
-  no compiler optimization switch or directive is added. }
+{ Performance repair: H115/H116 table-driven reflection and seven-product
+  trials are withdrawn. These versions use the same H114 solver kernel,
+  with strict Boolean A / packed B formulas and unchanged validation.
+  g stays at validation ENTRY; its elapsed time is appended after gen
+  in the SAME g field. No e label, no cross-row or shifted x/gen time.
+  Existing compilation fixes, backend comparison modes and CRLF remain. }
 { H114: share additive-FFT forward images in paired products; fuse
   matrix products in the frequency domain before inverse conversion.
   H113 residue-class Taylor/Pascal conversion is retained. Restore exact
@@ -1653,82 +1640,20 @@ end;
   where s_h(X)=X^(2^h)+X; this accepts EVERY transform dimension. }
 { H114: the same grouped linear Pascal network in A/B. }
 { H114: the same grouped linear Pascal network in A/B. }
-type TH115PascalRow=TBW16;
-var h115PascalTable:array of TH115PascalRow;
-var h115PascalOffset:array[0..4]of longint;
-var h115PascalBuilt:longint=3;
-var h115PascalGroup:longint=1;
-
-{ Every recursive slice reuses the OUTER plan. Replanning from a short
-  slice would lose the logarithmic saving. Integers below are addresses. }
-procedure H115PreparePascal(dim:longint);
-var groupDim,width,rows,start,value,previous,bitIndex,j:longint;
-begin
-h115PascalGroup:=1;
-while (1 shl (h115PascalGroup+1))<=dim do inc(h115PascalGroup);
-{ Signed array indices limit dim to 30, hence at most four axes. }
-if h115PascalGroup>4 then Halt(233);
-if h115PascalGroup<=h115PascalBuilt then exit;
-for groupDim:=h115PascalBuilt+1 to h115PascalGroup do
-  begin
-  width:=1 shl groupDim; rows:=1 shl width;
-  start:=Length(h115PascalTable); h115PascalOffset[groupDim]:=start;
-  SetLength(h115PascalTable,start+rows);
-  FillChar(h115PascalTable[start],SizeOf(h115PascalTable[start]),0);
-  for value:=1 to rows-1 do
-    begin
-    bitIndex:=0; previous:=value;
-    while (previous and 1)=0 do begin previous:=previous shr 1; inc(bitIndex); end;
-    previous:=value xor (1 shl bitIndex);
-    for j:=0 to width-1 do
-      h115PascalTable[start+value,j]:=h115PascalTable[start+previous,j] xor ((j and bitIndex)=j);
-    end;
-  end;
-h115PascalBuilt:=h115PascalGroup;
-end;
-
 procedure H113Pascal(var a:TH111Array; dim:longint);
-var pass,groupDim,width,step,half,base,offset,j,k,index,p,count,start,stage:longint;
+var pass,groupDim,stage,half,base,j,k,count:longint;
 begin
 count:=1 shl dim; pass:=0;
 while pass<dim do
   begin
-  groupDim:=dim-pass; if groupDim>h115PascalGroup then groupDim:=h115PascalGroup;
-  if groupDim<=3 then
+  groupDim:=dim-pass; if groupDim>3 then groupDim:=3;
+  for stage:=0 to groupDim-1 do
     begin
-    for stage:=0 to groupDim-1 do
-      begin
-      half:=1 shl (pass+stage); base:=0;
-      while base<count do
-        begin
-        for j:=base to base+half-1 do for k:=0 to 31 do a[j,k]:=a[j,k] xor a[j+half,k];
-        inc(base,half*2);
-        end;
-      end;
-    end
-  else
-    begin
-    width:=1 shl groupDim; step:=1 shl pass;
-    start:=h115PascalOffset[groupDim]; base:=0;
+    half:=1 shl (pass+stage); base:=0;
     while base<count do
       begin
-      for offset:=0 to step-1 do for k:=0 to 31 do
-        begin
-        
-        index:=0; p:=base+offset;
-        for j:=0 to width-1 do
-          begin if a[p,k] then index:=index or (1 shl j); inc(p,step); end;
-        if index<>0 then
-          begin
-          p:=base+offset;
-          for j:=0 to width-1 do
-            begin
-            a[p,k]:=h115PascalTable[start+index,j];
-            inc(p,step);
-            end;
-          end;
-        end;
-      inc(base,width*step);
+      for j:=base to base+half-1 do for k:=0 to 31 do a[j,k]:=a[j,k] xor a[j+half,k];
+      inc(base,half*2);
       end;
     end;
   inc(pass,groupDim);
@@ -1795,22 +1720,16 @@ for d:=0 to period-1 do
   end;
 end;
 
-procedure H115ConvertCore(var a:TH111Array; base,stride,dim:longint; inverse:boolean);
+procedure H111Convert(var a:TH111Array; base,stride,dim:longint; inverse:boolean);
 var h,g,lowCount,highCount,p:longint;
 begin
 if dim<=1 then exit;
 h:=1; while h*2<dim do h:=h*2;
 g:=dim-h; lowCount:=1 shl h; highCount:=1 shl g;
 if inverse then H111Taylor(a,base,stride,dim,h,true);
-for p:=0 to highCount-1 do H115ConvertCore(a,base+p*lowCount*stride,stride,h,inverse);
-for p:=0 to lowCount-1 do H115ConvertCore(a,base+p*stride,stride*lowCount,g,inverse);
+for p:=0 to highCount-1 do H111Convert(a,base+p*lowCount*stride,stride,h,inverse);
+for p:=0 to lowCount-1 do H111Convert(a,base+p*stride,stride*lowCount,g,inverse);
 if not inverse then H111Taylor(a,base,stride,dim,h,false);
-end;
-
-procedure H111Convert(var a:TH111Array; base,stride,dim:longint; inverse:boolean);
-begin
-H115PreparePascal(dim);
-H115ConvertCore(a,base,stride,dim,inverse);
 end;
 
 procedure H111Transform(var a:TH111Array; dim:longint; inverse:boolean);
@@ -4613,7 +4532,7 @@ for pass:=0 to 3 do
   end;
 end;
 
-procedure H115OriginalConvertH(var a:TDynBool; first,count:longint; inverse:boolean);
+procedure ConvertH(var a:TDynBool; first,count:longint; inverse:boolean);
 var h,g,j:longint;
 begin
 if count=32 then begin ConvertH32Bool(a,first,inverse); exit; end;
@@ -4621,116 +4540,12 @@ h:=32; while (h shl 1)<count do h:=h shl 1;
 g:=count-h;
 if not inverse then
   begin
-  H115OriginalConvertH(a,first,h,false); H115OriginalConvertH(a,first+h,g,false);
+  ConvertH(a,first,h,false); ConvertH(a,first+h,g,false);
   end;
 for j:=1 to g-1 do a[first+h-j]:=a[first+h-j] xor a[first+h+j];
 if inverse then
   begin
-  H115OriginalConvertH(a,first,h,true); H115OriginalConvertH(a,first+h,g,true);
-  end;
-end;
-
-{ The reflection i -> 2*h-i preserves residues modulo h up to sign.
-  For 0<r<h its orbit is r,2*h-r,2*h+r,4*h-r,... . A group of b
-  stages is therefore ONE fixed linear map on 2^b bits. The r=0
-  boundary orbit has its own map; inverse maps reverse the stages.
-  Choose 2^b<=ceil(log2(count))/2: all four tables take O(count)
-  space and setup, and the complete conversion takes
-  O(count*log(count)/log(log(count))) bit/address operations in the
-  lookup-RAM model. This is a LOCAL conversion improvement, not a
-  lower general half-GCD bound. Arbitrary 32-aligned lengths and
-  partial final orbits retain exactly the original zero extension. }
-var h115OrbitTable:array[0..3]of array of TH115PascalRow;
-var h115OrbitOffset:array[0..4]of longint;
-var h115OrbitBuilt:longint=0;
-
-procedure H115PrepareOrbits(groupDim:longint);
-var axes,width,rows,start,kind,k,j,pass,stage,half,base,value,previous,bitIndex:longint;
-var column:array[0..15]of TH115PascalRow;
-begin
-for axes:=h115OrbitBuilt+1 to groupDim do
-  begin
-  width:=1 shl axes; rows:=1 shl width;
-  start:=Length(h115OrbitTable[0]); h115OrbitOffset[axes]:=start;
-  for kind:=0 to 3 do
-    begin
-    for k:=0 to width-1 do for j:=0 to width-1 do column[k,j]:=k=j;
-    for pass:=0 to axes-1 do
-      begin
-      if (kind and 1)<>0 then stage:=axes-1-pass else stage:=pass;
-      half:=1 shl stage; base:=0;
-      while base<width do
-        begin
-        if kind>=2 then
-          begin
-          for j:=1 to half-1 do for k:=0 to width-1 do column[k,base+half-j]:=column[k,base+half-j] xor column[k,base+half+j];
-          end
-        else
-          begin
-          for j:=0 to half-1 do for k:=0 to width-1 do column[k,base+j]:=column[k,base+j] xor column[k,base+(j xor (half*2-1))];
-          end;
-        inc(base,half*2);
-        end;
-      end;
-    SetLength(h115OrbitTable[kind],start+rows);
-    FillChar(h115OrbitTable[kind][start],SizeOf(h115OrbitTable[kind][start]),0);
-    for value:=1 to rows-1 do
-      begin
-      previous:=value; bitIndex:=0;
-      while (previous and 1)=0 do begin previous:=previous shr 1; inc(bitIndex); end;
-      previous:=value xor (1 shl bitIndex);
-      for j:=0 to width-1 do
-        h115OrbitTable[kind][start+value,j]:=h115OrbitTable[kind][start+previous,j] xor column[bitIndex,j];
-      end;
-    end;
-  end;
-if groupDim>h115OrbitBuilt then h115OrbitBuilt:=groupDim;
-end;
-
-procedure ConvertH(var a:TDynBool; first,count:longint; inverse:boolean);
-var dim,t,groupDim,axes,h,width,blockLength,base,r,j,p,index,kind,start,levels,pass,level:longint;
-var savedH,savedAxes:array[0..30]of longint;
-begin
-if count<=256 then begin H115OriginalConvertH(a,first,count,inverse); exit; end;
-if count>High(longint) div 2 then Halt(233);
-dim:=0; t:=count-1; while t>0 do begin t:=t shr 1; inc(dim); end;
-groupDim:=1; while (1 shl (groupDim+1))<=dim div 2 do inc(groupDim);
-H115PrepareOrbits(groupDim);
-h:=1; levels:=0;
-while h<count do
-  begin
-  axes:=1; while (axes<groupDim) and ((h shl axes)<count) do inc(axes);
-  savedH[levels]:=h; savedAxes[levels]:=axes; inc(levels); h:=h shl axes;
-  end;
-for pass:=0 to levels-1 do
-  begin
-  if inverse then level:=levels-1-pass else level:=pass;
-  h:=savedH[level]; axes:=savedAxes[level]; width:=1 shl axes;
-  blockLength:=h*width; start:=h115OrbitOffset[axes]; base:=0;
-  while base<count do
-    begin
-    for r:=0 to h-1 do if base+r<count then
-      begin
-      kind:=ord(inverse); if r=0 then inc(kind,2);
-      index:=0;
-      for j:=0 to width-1 do
-        begin
-        if r=0 then p:=base+j*h
-        else if (j and 1)=0 then p:=base+j*h+r else p:=base+(j+1)*h-r;
-        if p<count then if a[first+p] then index:=index or (1 shl j);
-        end;
-      if index<>0 then for j:=0 to width-1 do
-        begin
-        if r=0 then p:=base+j*h
-        else if (j and 1)=0 then p:=base+j*h+r else p:=base+(j+1)*h-r;
-        if p<count then
-          begin
-          a[first+p]:=h115OrbitTable[kind][start+index,j];
-          end;
-        end;
-      end;
-    inc(base,blockLength);
-    end;
+  ConvertH(a,first,h,true); ConvertH(a,first+h,g,true);
   end;
 end;
 

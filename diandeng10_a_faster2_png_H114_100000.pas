@@ -1,3 +1,9 @@
+{ Performance repair: H115/H116 table-driven reflection and seven-product
+  trials are withdrawn. These versions use the same H114 solver kernel,
+  with strict Boolean A / packed B formulas and unchanged validation.
+  g stays at validation ENTRY; its elapsed time is appended after gen
+  in the SAME g field. No e label, no cross-row or shifted x/gen time.
+  Existing compilation fixes, backend comparison modes and CRLF remain. }
 { H114: share additive-FFT forward images in paired products; fuse
   matrix products in the frequency domain before inverse conversion.
   H113 residue-class Taylor/Pascal conversion is retained. Restore exact
@@ -642,6 +648,17 @@ begin
   lastCounter:=c;
   TimeMark:=ms;
   write(ms:8:3,#9,ch);
+end;
+
+{ g is a START label, like m/q/z/x. Complete its numeric field on the
+  SAME line after ALL validation work. There is no separate e column. }
+procedure FinishGenTiming;
+var counter:Int64; ms:Double;
+begin
+QueryPerformanceCounter(counter);
+ms:=(counter-lastCounter)*1000.0/perfFreq;
+lastCounter:=counter;
+write(ms:8:3,#9);
 end;
 
 {$ifdef disp}
@@ -5725,14 +5742,14 @@ function GeneMat():boolean;
 var t:TVec;
 begin
 TimeMark('g');
-if h108Ready then begin GeneMat:=H108Check; write(GeneMat); exit; end;
-if h107Ready then begin GeneMat:=H107Check; write(GeneMat); exit; end;
+if h108Ready then begin GeneMat:=H108Check; FinishGenTiming; write(GeneMat); exit; end;
+if h107Ready then begin GeneMat:=H107Check; FinishGenTiming; write(GeneMat); exit; end;
 if H103Dyadic then H103InverseJ(x,t)
 else
 ApplyFastUCombo(f,c,x,t,n-1,longint(n div 2),2);
 GeneMat:=true;
 for i:=0 to n-1 do GeneMat:=GeneMat and (t[i]=y[i]);
-write(GeneMat);
+FinishGenTiming; write(GeneMat);
 end;
 
 begin
@@ -5760,7 +5777,7 @@ for n:=99900 to 100000 do
   write(n,#9);
   MakeMat();
   CalcMat2();
-  GeneMat();TimeMark('e');{$ifdef disp}write('%');SaveMat('_T2');{$endif}
+  GeneMat();{$ifdef disp}write('%');SaveMat('_T2');{$endif}
   {$ifdef disp}if not(iswin()) then halt;{$endif}
   writeln();
   end;
