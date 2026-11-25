@@ -266,7 +266,7 @@ end;
   by the four comparison programs. Mode 0 retains the small hybrid;
   1=Karatsuba, 2=exact ring FFT, 3=integer NTT, 4=fused matrix NTT.
   The fusion changes constants, not the half-GCD asymptotic bound. }
-const h114FixedComparison=true;
+var h114FixedComparison:boolean=true;
 var h102Force:longint=1;
 var h102Backend:longint;
 
@@ -1342,7 +1342,7 @@ end;
   where s_h(X)=X^(2^h)+X; this accepts EVERY transform dimension. }
 { H114: the same grouped linear Pascal network in A/B. }
 procedure H113Pascal(var a:TH111Array; dim:longint);
-var pass,groupDim,stage,half,base,j,k,count:longint;
+var pass,groupDim,stage,half,base,j,count:longint;
 begin
 count:=1 shl dim; pass:=0;
 while pass<dim do
@@ -2963,7 +2963,7 @@ for i:=0 to High(a) do z[i]:=H111Mul(a[i],b[i]) xor H111Mul(c[i],d[i]);
 H114Inverse(z,dim);
 end;
 procedure H114LoadPolyW(const a:THPolyW; limit,count,dim:longint; var z:TH111Array);
-var used,j,k,take:longint;
+var used,j,take:longint;
 begin
 SetLength(z,count); FillChar(z[0],count*SizeOf(z[0]),0);
 used:=a.d+1; if used>limit then used:=limit;

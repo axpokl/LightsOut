@@ -6,4 +6,4 @@ del *.ppu
 del *.o
 del *.or
 del *.a
-::pause
+pause

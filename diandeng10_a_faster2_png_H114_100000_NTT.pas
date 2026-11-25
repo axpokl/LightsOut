@@ -511,7 +511,7 @@ var bp:pbitmap;
   by the four comparison programs. Mode 0 retains the small hybrid;
   1=Karatsuba, 2=exact ring FFT, 3=integer NTT, 4=fused matrix NTT.
   The fusion changes constants, not the half-GCD asymptotic bound. }
-const h114FixedComparison=true;
+var h114FixedComparison:boolean=true;
 var h102Force:longint=4;
 var h102Backend:longint;
 

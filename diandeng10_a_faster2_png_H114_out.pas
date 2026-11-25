@@ -498,7 +498,7 @@ var uKernel8:array[0..255,0..28] of boolean;
   by the four comparison programs. Mode 0 retains the small hybrid;
   1=Karatsuba, 2=exact ring FFT, 3=integer NTT, 4=fused matrix NTT.
   The fusion changes constants, not the half-GCD asymptotic bound. }
-const h114FixedComparison=false;
+var h114FixedComparison:boolean=false;
 var h102Force:longint=0;
 var h102Backend:longint;
 
