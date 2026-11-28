@@ -82,10 +82,10 @@
 | Toom-Cook法 | 三段拆分，只做五次乘法 | `O(n^1.465)` |
 | FFT法 | 利用快速卷积，并计入扩域或递归开销 | `O(n log²n log log n)` |
 | NTT法 | 通过模整数变换精确计算卷积 | `O(n log²n)` |
-| 张量法 | 共享变换，预测乘子并精确修复例外 | `O(n(log n)^(3/2))` |
+| 张量法 | 共享变换，预测乘子并精确修复例外 | `O(n log n (log log n)⁽¹⁄²⁺ᵋ⁾)` |
 
 - 低于 `O(n²)` 的复杂度针对首行计算或多项式求解阶段；显式输出整盘仍需 `Θ(n²)` 时间。
-- 后五种复杂度取决于乘法模型，以及其余阶段是否完成相应加速。FFT/NTT 需要满足后文的变换条件；张量法一项省略了一个小指数项，严格表达见第十章。
+- 后五种复杂度取决于乘法模型，以及其余阶段是否完成相应加速。FFT/NTT 需要满足后文的变换条件；张量法一项按可扩展字 RAM 模型计，见第十章。
 - `1.585` 和 `1.465` 为指数的近似值，精确表达见对应章节。这些方法求一组合法解，不保证点击次数最少。
 
 ---
@@ -581,7 +581,7 @@
 
 ---
 
-## 10) 张量法 · `O(n(log n)^(3/2))`
+## 10) 张量法 · `O(n log n (log log n)⁽¹⁄²⁺ᵋ⁾)`
 
 这里将该理论路线简称为**张量法**。张量用于组织多线性运算及其复杂度分析；具体加速依靠批量共享变换、低次多项式预测和精确修复，而不是直接计算一个更大的张量。
 
@@ -601,8 +601,8 @@
 - 将形式多项式乘法界代入 Half-GCD，按第 `j` 层的子问题长度求和：
   - `T(n)=O_ε(n Σⱼ₌₀^⌈log₂n⌉ (1+log₂n-j)^(1/2+ε))`
   - `=O_ε(n(log n)^(3/2+ε))`
-- 因而“`O(n(log n)^(3/2))`”只能作为省略小指数项的简写；严格写法应保留 `ε`，或在相应的渐近指数意义下写作 `n(log n)^(3/2+o(1))`。
-- 文献并未给出这里的 Lights Out Pascal 实现；上述结果是对 Half-GCD 运算成本的推导。电路构造、求值调度、坐标变换及一般奇异分支的成本，仍需分别落实。
+- H120–H122 将 GF(2) 系数按 `Θ(log n)` 位分组，并对块级变换使用分组傅里叶电路。在对数宽机器字、常数时间查表的可扩展字 RAM 模型下，乘法上界为 `O(n (log log n)⁽¹⁄²⁺ᵋ⁾)`，计入半 GCD 等阶段后，通用首行求解的整体上界为 **`O(n log n (log log n)⁽¹⁄²⁺ᵋ⁾)`**。其中 `ε` 可取任意固定的 `0 < ε < ½`，大 O 的常数可依赖 `ε`。
+- 文献并未给出这里的 Lights Out Pascal 实现；上文的 `O_ε(n(log n)^(3/2+ε))` 是形式域运算模型下对 Half-GCD 成本的推导。电路构造、求值调度、坐标变换及一般奇异分支的成本，仍需分别落实。
 - 整数位乘法界不能直接当作同规模 GF(2) 多项式乘法界：直接用整数打包系数通常还需要防进位的间隔位。
 - OpenAI 将该集合定位为模型生成的研究手稿，并说明验证程度不一 [28]；本文按文献报告其理论结果，不将其视为本项目已实现或已独立验证的性能。
 
@@ -854,10 +854,10 @@ https://github.com/openai/math/blob/main/README.md
 | Toom–Cook | Split into three parts and use five products | `O(n^1.465)` |
 | FFT | Use fast convolution with extension/recursive overhead | `O(n log²n log log n)` |
 | NTT | Use exact modular transforms for convolution | `O(n log²n)` |
-| Tensor method | Share transforms, predict multipliers and repair exceptions exactly | `O(n(log n)^(3/2))` |
+| Tensor method | Share transforms, predict multipliers and repair exceptions exactly | `O(n log n (log log n)⁽¹⁄²⁺ᵋ⁾)` |
 
 - Bounds below `O(n²)` concern first-row computation or the polynomial solving stage. Explicit full-board output still costs `Θ(n²)`.
-- The last five bounds depend on the multiplication model and on accelerating every remaining stage. FFT/NTT require their stated transform assumptions; the tensor-method entry suppresses a small exponent term, made precise in Chapter 10.
+- The last five bounds depend on the multiplication model and on accelerating every remaining stage. FFT/NTT require their stated transform assumptions; the tensor-method entry uses the scalable word-RAM model described in Chapter 10.
 - Multiplication exponents `1.585` and `1.465` are decimal approximations; the exact expressions appear below. These methods find a valid solution, without guaranteeing the minimum number of presses.
 
 ---
@@ -1353,7 +1353,7 @@ The remaining methods keep the first-row equation unchanged and accelerate its p
 
 ---
 
-## 10) Tensor method · `O(n(log n)^(3/2))`
+## 10) Tensor method · `O(n log n (log log n)⁽¹⁄²⁺ᵋ⁾)`
 
 The **tensor method** is a short name for this theoretical approach. Tensors organize multilinear operations and their complexity analysis; the actual speedup comes from sharing transforms across batches, low-degree prediction and exact repair, rather than directly computing a larger tensor.
 
@@ -1373,8 +1373,8 @@ The **tensor method** is a short name for this theoretical approach. Tensors org
 - Substitute the formal multiplication bound into Half-GCD and sum over the subproblem sizes at level `j`:
   - `T(n)=O_ε(n Σⱼ₌₀^⌈log₂n⌉ (1+log₂n-j)^(1/2+ε))`
   - `=O_ε(n(log n)^(3/2+ε))`
-- Thus `O(n(log n)^(3/2))` is only shorthand suppressing a small exponent term. A strict statement retains `ε`, or uses `n(log n)^(3/2+o(1))` in the corresponding asymptotic-exponent sense.
-- These manuscripts do not provide this Lights Out Pascal implementation. The displayed bound is a derivation for Half-GCD operation cost; circuit construction, evaluation scheduling, coordinate conversions and the general singular branch still require separate implementation and analysis.
+- H120–H122 pack GF(2) coefficients into groups of `Θ(log n)` bits and use grouped Fourier circuits for block-level transforms. On a scalable word RAM with logarithmic-width words and constant-time table lookups, multiplication has upper bound `O(n (log log n)⁽¹⁄²⁺ᵋ⁾)`. Including Half-GCD and the other stages gives the overall general first-row solving upper bound **`O(n log n (log log n)⁽¹⁄²⁺ᵋ⁾)`**. Here `ε` is any fixed value with `0 < ε < ½`, and the big-O constant may depend on `ε`.
+- These manuscripts do not provide this Lights Out Pascal implementation. The bound `O_ε(n(log n)^(3/2+ε))` counts Half-GCD operations in the formal field-operation model; circuit construction, evaluation scheduling, coordinate conversions and the general singular branch still require separate implementation and analysis.
 - The integer bit-multiplication bound is not automatically a same-size GF(2) polynomial bound: direct integer packing usually requires extra spacing to prevent carries between coefficient slots.
 - OpenAI describes the collection as model-generated research manuscripts with varying verification status [28]. These theoretical results are reported as such, rather than as implemented or independently verified performance of this project.
 
