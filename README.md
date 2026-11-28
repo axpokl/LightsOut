@@ -10,16 +10,16 @@
 
 - 问题、关键观察与记号
 - 算法总览
-- 1) 穷举法 · `O(2^(n²)·n²)`
-- 2) 首行穷举 · `O(2^n·n²)`
+- 1) 穷举法 · `O(2^(n²) · n²)`
+- 2) 首行穷举 · `O(2ⁿ · n²)`
 - 3) 叠加法 · `O(n⁶)`
 - 4) 首行叠加法 · `O(n³)`
 - 5) 首行求逆法 · `O(n²)`
-- 6) Karatsuba法 · `O(n^1.585)`
-- 7) Toom-Cook法 · `O(n^1.465)`
-- 8) FFT法 · `O(n log²n log log n)`
-- 9) NTT法 · `O(n log²n)`
-- 10) 张量法 · `O(n log n (log log n)⁽¹⁄²⁺ᵋ⁾)`   
+- 6) Karatsuba法 · `O(n^(log₂ 3))`
+- 7) Toom-Cook法 · `O(n^(log₃ 5))`
+- 8) FFT法 · `O(n log² n log log n)`
+- 9) NTT法 · `O(n log² n)`
+- 10) 张量法 · `O(n log n log log n)`   
 - 复杂度与实现范围
 - 可解性
 - 工程实现与验证建议
@@ -73,24 +73,24 @@
 
 | 方法 | 核心思路 | 时间复杂度 |
 |---|---|---|
-| 穷举法 | 枚举整盘按钮组合 | `O(2^(n²)·n²)` |
-| 首行穷举 | 枚举首行，逐行确定后续按钮 | `O(2^n·n²)` |
+| 穷举法 | 枚举整盘按钮组合 | `O(2^(n²) · n²)` |
+| 首行穷举 | 枚举首行，逐行确定后续按钮 | `O(2ⁿ · n²)` |
 | 叠加法 | 求解完整的 `n²×n²` 线性系统 | `O(n⁶)` |
 | 首行叠加法 | 将问题缩减为 `n×n` 首行系统 | `O(n³)` |
 | 首行求逆法 | 多项式求逆与结构化回代 | `O(n²)` |
-| Karatsuba法 | 四次半长乘法减少为三次 | `O(n^1.585)` |
-| Toom-Cook法 | 三段拆分，只做五次乘法 | `O(n^1.465)` |
-| FFT法 | 利用快速卷积，并计入扩域或递归开销 | `O(n log²n log log n)` |
-| NTT法 | 通过模整数变换精确计算卷积 | `O(n log²n)` |
-| 张量法 | 共享变换，预测乘子并精确修复例外 | `O(n log n (log log n)⁽¹⁄²⁺ᵋ⁾)` |
+| Karatsuba法 | 四次半长乘法减少为三次 | `O(n^(log₂ 3))` |
+| Toom-Cook法 | 三段拆分，只做五次乘法 | `O(n^(log₃ 5))` |
+| FFT法 | 利用快速卷积，并计入扩域或递归开销 | `O(n log² n log log n)` |
+| NTT法 | 通过模整数变换精确计算卷积 | `O(n log² n)` |
+| 张量法 | 共享变换，预测乘子并精确修复例外 | `O(n log n log log n)` |
 
 - 低于 `O(n²)` 的复杂度针对首行计算或多项式求解阶段；显式输出整盘仍需 `Θ(n²)` 时间。
 - 后五种复杂度取决于乘法模型，以及其余阶段是否完成相应加速。FFT/NTT 需要满足后文的变换条件；张量法一项按可扩展字 RAM 模型计，见第十章。
-- `1.585` 和 `1.465` 为指数的近似值，精确表达见对应章节。这些方法求一组合法解，不保证点击次数最少。
+- 这些方法求一组合法解，不保证点击次数最少。
 
 ---
 
-## 1) 穷举法 · `O(2^(n²)·n²)`
+## 1) 穷举法 · $O(2^{n^2}\cdot n^2)$
 
 - 枚举所有按钮向量 `x`（长度 `n^2`），计算 `l = A·x`，检查是否全亮。
 - 示例：
@@ -102,7 +102,7 @@
 
 ---
 
-## 2) 首行穷举 · `O(2^n·n²)`
+## 2) 首行穷举 · $O(2^n\cdot n^2)$
 
 - 关键现象：
   - 随机选择第 1 行按钮后，第 1 行灯状态确定；
@@ -116,7 +116,7 @@
 
 ---
 
-## 3) 叠加法 · `O(n⁶)`
+## 3) 叠加法 · $O(n^6)$
 
 - 将所有按钮操作写成增广矩阵 `[E | A]`：
   - 左边 `E` 记录按钮组合；
@@ -133,7 +133,7 @@
 
 ---
 
-## 4) 首行叠加法 · `O(n³)`
+## 4) 首行叠加法 · $O(n^3)$
 
 > 将“首行穷举的逐行递推”与“线性叠加”结合：把最后一行灯写成“首行按钮的线性组合 + 翻转向量”，于是只需求解 `n×n` 系统。
 
@@ -189,7 +189,7 @@
 
 ---
 
-## 5) 首行求逆法 · `O(n²)`
+## 5) 首行求逆法 · $O(n^2)$
 
 > 目标：求解首行系统 `B X = Y`（GF(2)）。这里的 `B` 是首行叠加法得到的 `n×n` 矩阵，`Y` 是翻转向量的最后一行。
 
@@ -373,7 +373,7 @@
 
 ---
 
-## 6) Karatsuba法 · `O(n^1.585)`
+## 6) Karatsuba法 · $O(n^{\log_2 3})$
 
 后面的五种方法保留首行方程，主要加速其中的多项式运算。Karatsuba 首先将乘法降到亚二次，再通过快速除法、Half-GCD 和卷积，将加速传递到求解过程。
 
@@ -429,7 +429,7 @@
   - `p₁=(a₀⊕a₁)(b₀⊕b₁)⊕p₀⊕p₂`
   - `ab=p₀⊕t^m p₁⊕t^(2m)p₂`
 - 四次半长乘法减少为三次：
-  - `M(n)=3M(n/2)+O(n)=O(n^log₂3)`
+  - `M(n)=3M(n/2)+O(n)=O(n^(log₂ 3))`
 
 ### 形式幂级数求逆与快速除法
 
@@ -518,12 +518,12 @@
 
 ### 时间复杂度
 
-- 使用 `M(n)=O(n^log₂3)` 时，Half-GCD 同样为 `O(n^log₂3)≈O(n^1.585)`。
+- 使用 `M(n)=O(n^(log₂ 3))` 时，Half-GCD 同样为 `O(n^(log₂ 3))`。
 - 若要将该界用于整个首行求解，还需使一般奇异分支及坐标变换达到对应的快速界。
 
 ---
 
-## 7) Toom-Cook法 · `O(n^1.465)`
+## 7) Toom-Cook法 · $O(n^{\log_3 5})$
 
 ### 三段拆分与五次乘法
 
@@ -533,18 +533,18 @@
 - 把这些分段视为二次多项式 `A(v),B(v)` 的系数。乘积最高为四次，选择五个求值条件，只做五次对应乘法，即可插值恢复五个系数块。
 - 最后代回 `v=t^m`，重组完整乘积。递推式为：
   - `M(n)=5M(⌈n/3⌉)+O(n)`
-  - `M(n)=O(n^log₃5)≈O(n^1.465)`
+  - `M(n)=O(n^(log₃ 5))`
 - 代入 Half-GCD 后仍保留这一指数，快速除法和卷积沿用第六章的框架。
 
 ### 特征 2 下的插值
 
 - 整数版本常用的 `0,1,-1,2` 等求值点，在 GF(2) 中会重合，不能直接套用。
 - 一种可行方式是在固定扩域 `GF(4)` 上运算，使用其中四个不同元素，再结合最高次系数（无穷远点求值）。这样仍只需五次乘法，固定扩域使每次系数运算只增加常数开销。
-- 实现必须包含正确的求值和插值过程；仅将多项式拆成三段，并不能得到 `1.465` 的指数。
+- 实现必须包含正确的求值和插值过程；仅将多项式拆成三段，并不能得到 `log₃ 5` 的指数。
 
 ---
 
-## 8) FFT法 · `O(n log²n log log n)`
+## 8) FFT法 · $O(n\log^2 n\log\log n)$
 
 ### 变换、逐点相乘与逆变换
 
@@ -562,7 +562,7 @@
 
 ---
 
-## 9) NTT法 · `O(n log²n)`
+## 9) NTT法 · $O(n\log^2 n)$
 
 ### 精确模整数卷积
 
@@ -581,7 +581,7 @@
 
 ---
 
-## 10) 张量法 · `O(n log n (log log n)⁽¹⁄²⁺ᵋ⁾)`
+## 10) 张量法 · $O(n\log n\log\log n)$
 
 这里将该理论路线简称为**张量法**。张量用于组织多线性运算及其复杂度分析；具体加速依靠批量共享变换、低次多项式预测和精确修复，而不是直接计算一个更大的张量。
 
@@ -601,7 +601,7 @@
 - 将形式多项式乘法界代入 Half-GCD，按第 `j` 层的子问题长度求和：
   - `T(n)=O_ε(n Σⱼ₌₀^⌈log₂n⌉ (1+log₂n-j)^(1/2+ε))`
   - `=O_ε(n(log n)^(3/2+ε))`
-- H120–H122 将 GF(2) 系数按 `Θ(log n)` 位分组，并对块级变换使用分组傅里叶电路。在对数宽机器字、常数时间查表的可扩展字 RAM 模型下，乘法上界为 `O(n (log log n)⁽¹⁄²⁺ᵋ⁾)`，计入半 GCD 等阶段后，通用首行求解的整体上界为 **`O(n log n (log log n)⁽¹⁄²⁺ᵋ⁾)`**。其中 `ε` 可取任意固定的 `0 < ε < ½`，大 O 的常数可依赖 `ε`。
+- H120–H122 将 GF(2) 系数按 `Θ(log n)` 位分组，并对块级变换使用分组傅里叶电路。在对数宽机器字、常数时间查表的可扩展字 RAM 模型下，乘法上界为 `O(n (log log n)⁽¹⁄²⁺ᵋ⁾)`，计入半 GCD 等阶段后，通用首行求解的整体上界为 **`O(n log n (log log n)⁽¹⁄²⁺ᵋ⁾)`**。其中 `ε` 可取任意固定的 `0 < ε < ½`，大 O 的常数可依赖 `ε`。 由于 ½ + ε < 1，目录、总览表和标题采用较简洁的上界 O(n log n log log n)。
 - 文献并未给出这里的 Lights Out Pascal 实现；上文的 `O_ε(n(log n)^(3/2+ε))` 是形式域运算模型下对 Half-GCD 成本的推导。电路构造、求值调度、坐标变换及一般奇异分支的成本，仍需分别落实。
 - 整数位乘法界不能直接当作同规模 GF(2) 多项式乘法界：直接用整数打包系数通常还需要防进位的间隔位。
 - OpenAI 将该集合定位为模型生成的研究手稿，并说明验证程度不一 [28]；本文按文献报告其理论结果，不将其视为本项目已实现或已独立验证的性能。
@@ -617,10 +617,10 @@
 |---|---|---|
 | `f/c` | 逐项递推 `O(n²)` | Fibonacci 倍增 `O(n)` |
 | `Y` | 逐行扩散 `O(n²)` | Laurent 分治、全 1 卷积与反射 `O(n log n)` |
-| `q/g` | 普通扩展 Euclid `O(n²)` | Half-GCD；通用上界 `O(M(n)log n)` |
-| `z=q(H)Y` | 重复扩散 `O(n²)` | 核展开与卷积 `O(n log n+M(n))` |
+| `q/g` | 普通扩展 Euclid `O(n²)` | Half-GCD；通用上界 `O(M(n) log n)` |
+| `z=q(H)Y` | 重复扩散 `O(n²)` | 核展开与卷积 `O(n log n + M(n))` |
 | 奇异分支 `X` | 带状消元 `O((n-d_r)d_r)`，另计初始化 | 三角卷积求解本身 `O(M(r))`；另计结构变换，或采用商环路线 |
-| 首行验证 | 重复扩散 `O(n²)` | `c(H)X` 的核展开与卷积 `O(n log n+M(n))` |
+| 首行验证 | 重复扩散 `O(n²)` | `c(H)X` 的核展开与卷积 `O(n log n + M(n))` |
 | 整盘生成与输出 | 逐行递推 | 显式逐格输出 `Θ(n²)` |
 
 - 本表列出可独立推导的通用上界；特殊目标的进一步简化及具体版本的复杂度，应以完整算法与实现为依据。
@@ -782,16 +782,16 @@ https://github.com/openai/math/blob/main/README.md
 
 - Problem, observations and notation
 - Algorithm overview
-- 1) Full brute force · `O(2^(n²)·n²)`
-- 2) First-row brute force · `O(2^n·n²)`
+- 1) Full brute force · `O(2^(n²) · n²)`
+- 2) First-row brute force · `O(2ⁿ · n²)`
 - 3) Superposition · `O(n⁶)`
 - 4) First-row superposition · `O(n³)`
 - 5) First-row inversion · `O(n²)`
-- 6) Karatsuba · `O(n^1.585)`
-- 7) Toom–Cook · `O(n^1.465)`
-- 8) FFT · `O(n log²n log log n)`
-- 9) NTT · `O(n log²n)`
-- 10) Tensor method · `O(n log n (log log n)⁽¹⁄²⁺ᵋ⁾)`
+- 6) Karatsuba · `O(n^(log₂ 3))`
+- 7) Toom–Cook · `O(n^(log₃ 5))`
+- 8) FFT · `O(n log² n log log n)`
+- 9) NTT · `O(n log² n)`
+- 10) Tensor method · `O(n log n log log n)`
 - Complexity and implementation scope
 - Solvability
 - Engineering tips and validation
@@ -845,24 +845,24 @@ https://github.com/openai/math/blob/main/README.md
 
 | Method | Main idea | Time complexity |
 |---|---|---|
-| Full brute force | Enumerate every button pattern | `O(2^(n²)·n²)` |
-| First-row brute force | Enumerate the first row and determine later rows | `O(2^n·n²)` |
+| Full brute force | Enumerate every button pattern | `O(2^(n²) · n²)` |
+| First-row brute force | Enumerate the first row and determine later rows | `O(2ⁿ · n²)` |
 | Superposition | Solve the full `n²×n²` system | `O(n⁶)` |
 | First-row superposition | Reduce to an `n×n` first-row system | `O(n³)` |
 | First-row inversion | Use polynomial inversion and structured back-substitution | `O(n²)` |
-| Karatsuba | Replace four half-length products with three | `O(n^1.585)` |
-| Toom–Cook | Split into three parts and use five products | `O(n^1.465)` |
-| FFT | Use fast convolution with extension/recursive overhead | `O(n log²n log log n)` |
-| NTT | Use exact modular transforms for convolution | `O(n log²n)` |
-| Tensor method | Share transforms, predict multipliers and repair exceptions exactly | `O(n log n (log log n)⁽¹⁄²⁺ᵋ⁾)` |
+| Karatsuba | Replace four half-length products with three | `O(n^(log₂ 3))` |
+| Toom–Cook | Split into three parts and use five products | `O(n^(log₃ 5))` |
+| FFT | Use fast convolution with extension/recursive overhead | `O(n log² n log log n)` |
+| NTT | Use exact modular transforms for convolution | `O(n log² n)` |
+| Tensor method | Share transforms, predict multipliers and repair exceptions exactly | `O(n log n log log n)` |
 
 - Bounds below `O(n²)` concern first-row computation or the polynomial solving stage. Explicit full-board output still costs `Θ(n²)`.
 - The last five bounds depend on the multiplication model and on accelerating every remaining stage. FFT/NTT require their stated transform assumptions; the tensor-method entry uses the scalable word-RAM model described in Chapter 10.
-- Multiplication exponents `1.585` and `1.465` are decimal approximations; the exact expressions appear below. These methods find a valid solution, without guaranteeing the minimum number of presses.
+- These methods find a valid solution, without guaranteeing the minimum number of presses.
 
 ---
 
-## 1) Full brute force · `O(2^(n²)·n²)`
+## 1) Full brute force · $O(2^{n^2}\cdot n^2)$
 
 - Enumerate every button vector `x` (length `n^2`), compute `l = A·x`, and check whether all lights are on.
 - Examples:
@@ -874,7 +874,7 @@ https://github.com/openai/math/blob/main/README.md
 
 ---
 
-## 2) First-row brute force · `O(2^n·n²)`
+## 2) First-row brute force · $O(2^n\cdot n^2)$
 
 - Key phenomenon:
   - After choosing the first-row presses, the first-row light state is fixed.
@@ -888,7 +888,7 @@ https://github.com/openai/math/blob/main/README.md
 
 ---
 
-## 3) Superposition · `O(n⁶)`
+## 3) Superposition · $O(n^6)$
 
 - Write all button operations as an augmented matrix `[E | A]`:
   - the left block `E` records button combinations;
@@ -905,7 +905,7 @@ https://github.com/openai/math/blob/main/README.md
 
 ---
 
-## 4) First-row superposition · `O(n³)`
+## 4) First-row superposition · $O(n^3)$
 
 > Combine row-by-row propagation with linear superposition: express the last-row lights as “a linear combination of first-row presses plus a flip vector”, so only an `n×n` system must be solved.
 
@@ -961,7 +961,7 @@ For a mapping matrix `B=P(H)`, commutation `HB=BH` gives:
 
 ---
 
-## 5) First-row inversion · `O(n²)`
+## 5) First-row inversion · $O(n^2)$
 
 > Goal: solve the first-row system `B X = Y` over GF(2). Here `B` is the `n×n` matrix from first-row superposition, and `Y` is the last row of the flip vector.
 
@@ -1145,7 +1145,7 @@ For a mapping matrix `B=P(H)`, commutation `HB=BH` gives:
 
 ---
 
-## 6) Karatsuba · `O(n^1.585)`
+## 6) Karatsuba · $O(n^{\log_2 3})$
 
 The remaining methods keep the first-row equation unchanged and accelerate its polynomial operations. Karatsuba supplies the first subquadratic multiplication kernel; fast division, Half-GCD and convolution carry the saving into the solver.
 
@@ -1201,7 +1201,7 @@ The remaining methods keep the first-row equation unchanged and accelerate its p
   - `p₁=(a₀⊕a₁)(b₀⊕b₁)⊕p₀⊕p₂`
   - `ab=p₀⊕t^m p₁⊕t^(2m)p₂`
 - Three half-length products replace four:
-  - `M(n)=3M(n/2)+O(n)=O(n^log₂3)`
+  - `M(n)=3M(n/2)+O(n)=O(n^(log₂ 3))`
 
 ### Power-series inversion and fast division
 
@@ -1290,12 +1290,12 @@ The remaining methods keep the first-row equation unchanged and accelerate its p
 
 ### Time bound
 
-- With `M(n)=O(n^log₂3)`, Half-GCD also costs `O(n^log₂3)≈O(n^1.585)`.
+- With `M(n)=O(n^(log₂ 3))`, Half-GCD also costs `O(n^(log₂ 3))`.
 - The same bound applies to the full first-row solver only when its general singular branch and coordinate conversions are accelerated as well.
 
 ---
 
-## 7) Toom–Cook · `O(n^1.465)`
+## 7) Toom–Cook · $O(n^{\log_3 5})$
 
 ### Three-way splitting
 
@@ -1305,18 +1305,18 @@ The remaining methods keep the first-row equation unchanged and accelerate its p
 - Regard the blocks as coefficients of quadratics `A(v),B(v)`. Their product has degree at most 4, so five evaluations and products determine its five coefficient blocks by interpolation.
 - Recombine the blocks by substituting `v=t^m`. The recurrence is:
   - `M(n)=5M(⌈n/3⌉)+O(n)`
-  - `M(n)=O(n^log₃5)≈O(n^1.465)`
+  - `M(n)=O(n^(log₃ 5))`
 - Substitution into Half-GCD preserves this power-law exponent. The fast division and convolution framework from Chapter 6 is reused.
 
 ### Interpolation over characteristic two
 
 - Integer formulas using points such as `0,1,-1,2` do not transfer directly to GF(2), where these points coincide.
 - One valid approach works over a fixed extension such as `GF(4)`, using its four distinct elements and the leading coefficient (evaluation at infinity). Five products then suffice; the fixed extension adds constant overhead per coefficient operation.
-- The implementation must supply exact evaluation and interpolation. Three-way splitting alone does not establish the `1.465` exponent.
+- The implementation must supply exact evaluation and interpolation. Three-way splitting alone does not establish the `log₃ 5` exponent.
 
 ---
 
-## 8) FFT · `O(n log²n log log n)`
+## 8) FFT · $O(n\log^2 n\log\log n)$
 
 ### Transform, multiply, invert
 
@@ -1334,7 +1334,7 @@ The remaining methods keep the first-row equation unchanged and accelerate its p
 
 ---
 
-## 9) NTT · `O(n log²n)`
+## 9) NTT · $O(n\log^2 n)$
 
 ### Exact modular convolution
 
@@ -1353,7 +1353,7 @@ The remaining methods keep the first-row equation unchanged and accelerate its p
 
 ---
 
-## 10) Tensor method · `O(n log n (log log n)⁽¹⁄²⁺ᵋ⁾)`
+## 10) Tensor method · $O(n\log n\log\log n)$
 
 The **tensor method** is a short name for this theoretical approach. Tensors organize multilinear operations and their complexity analysis; the actual speedup comes from sharing transforms across batches, low-degree prediction and exact repair, rather than directly computing a larger tensor.
 
@@ -1373,7 +1373,7 @@ The **tensor method** is a short name for this theoretical approach. Tensors org
 - Substitute the formal multiplication bound into Half-GCD and sum over the subproblem sizes at level `j`:
   - `T(n)=O_ε(n Σⱼ₌₀^⌈log₂n⌉ (1+log₂n-j)^(1/2+ε))`
   - `=O_ε(n(log n)^(3/2+ε))`
-- H120–H122 pack GF(2) coefficients into groups of `Θ(log n)` bits and use grouped Fourier circuits for block-level transforms. On a scalable word RAM with logarithmic-width words and constant-time table lookups, multiplication has upper bound `O(n (log log n)⁽¹⁄²⁺ᵋ⁾)`. Including Half-GCD and the other stages gives the overall general first-row solving upper bound **`O(n log n (log log n)⁽¹⁄²⁺ᵋ⁾)`**. Here `ε` is any fixed value with `0 < ε < ½`, and the big-O constant may depend on `ε`.
+- H120–H122 pack GF(2) coefficients into groups of `Θ(log n)` bits and use grouped Fourier circuits for block-level transforms. On a scalable word RAM with logarithmic-width words and constant-time table lookups, multiplication has upper bound `O(n (log log n)⁽¹⁄²⁺ᵋ⁾)`. Including Half-GCD and the other stages gives the overall general first-row solving upper bound **`O(n log n (log log n)⁽¹⁄²⁺ᵋ⁾)`**. Here `ε` is any fixed value with `0 < ε < ½`, and the big-O constant may depend on `ε`. Since ½ + ε < 1, the contents, overview table, and heading use the simpler upper bound O(n log n log log n).
 - These manuscripts do not provide this Lights Out Pascal implementation. The bound `O_ε(n(log n)^(3/2+ε))` counts Half-GCD operations in the formal field-operation model; circuit construction, evaluation scheduling, coordinate conversions and the general singular branch still require separate implementation and analysis.
 - The integer bit-multiplication bound is not automatically a same-size GF(2) polynomial bound: direct integer packing usually requires extra spacing to prevent carries between coefficient slots.
 - OpenAI describes the collection as model-generated research manuscripts with varying verification status [28]. These theoretical results are reported as such, rather than as implemented or independently verified performance of this project.
@@ -1389,10 +1389,10 @@ The **tensor method** is a short name for this theoretical approach. Tensors org
 |---|---|---|
 | `f/c` | Termwise recurrence, `O(n²)` | Fibonacci doubling, `O(n)` |
 | `Y` | Rowwise diffusion, `O(n²)` | Laurent divide and conquer, all-one convolution and reflection, `O(n log n)` |
-| `q/g` | Ordinary extended Euclid, `O(n²)` | Half-GCD; general upper bound `O(M(n)log n)` |
-| `z=q(H)Y` | Repeated diffusion, `O(n²)` | Kernel construction and convolution, `O(n log n+M(n))` |
+| `q/g` | Ordinary extended Euclid, `O(n²)` | Half-GCD; general upper bound `O(M(n) log n)` |
+| `z=q(H)Y` | Repeated diffusion, `O(n²)` | Kernel construction and convolution, `O(n log n + M(n))` |
 | Singular-branch `X` | Banded elimination, `O((n-d_r)d_r)`, plus initialization | Triangular convolution solve itself, `O(M(r))`; add structural conversion, or use the quotient-ring route |
-| First-row verification | Repeated diffusion, `O(n²)` | Kernel construction and convolution for `c(H)X`, `O(n log n+M(n))` |
+| First-row verification | Repeated diffusion, `O(n²)` | Kernel construction and convolution for `c(H)X`, `O(n log n + M(n))` |
 | Full-board generation and output | Rowwise recurrence | Explicit cell-by-cell output, `Θ(n²)` |
 
 - This table records independently derivable general bounds. Further simplifications for special targets and version-specific bounds require a complete algorithm and implementation.
