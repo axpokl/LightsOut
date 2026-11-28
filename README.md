@@ -19,7 +19,7 @@
 - 7) Toom-Cook法 · `O(n^1.465)`
 - 8) FFT法 · `O(n log²n log log n)`
 - 9) NTT法 · `O(n log²n)`
-- 10) 张量法 · `O(n(log n)^(3/2))`
+- 10) 张量法 · `O(n log n (log log n)⁽¹⁄²⁺ᵋ⁾)`   
 - 复杂度与实现范围
 - 可解性
 - 工程实现与验证建议
@@ -791,7 +791,7 @@ https://github.com/openai/math/blob/main/README.md
 - 7) Toom–Cook · `O(n^1.465)`
 - 8) FFT · `O(n log²n log log n)`
 - 9) NTT · `O(n log²n)`
-- 10) Tensor method · `O(n(log n)^(3/2))`
+- 10) Tensor method · `O(n log n (log log n)⁽¹⁄²⁺ᵋ⁾)`
 - Complexity and implementation scope
 - Solvability
 - Engineering tips and validation
